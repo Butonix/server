@@ -13,6 +13,7 @@ import { RequiresAuth } from '../RequiresAuth'
 import { Context } from '../Context'
 import { User } from '../entities/User'
 import { RepositoryInjector } from '../RepositoryInjector'
+import { Like } from 'typeorm'
 
 @Resolver(of => Topic)
 export class TopicResolver extends RepositoryInjector {
@@ -26,6 +27,15 @@ export class TopicResolver extends RepositoryInjector {
       })
       .loadRelationCountAndMap('topic.followerCount', 'topic.followers')
       .getOne()
+  }
+
+  @Query(returns => [Topic])
+  async searchTopics(@Arg('search') search: string) {
+    if (!search) return []
+
+    return this.topicRepository.find({
+      name: Like(search.toLowerCase().replace(/ /g, '_') + '%'),
+    })
   }
 
   @Query(returns => [Topic])
