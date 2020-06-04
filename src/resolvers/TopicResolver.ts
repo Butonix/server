@@ -1,5 +1,6 @@
 import {
   Arg,
+  Args,
   Ctx,
   FieldResolver,
   Mutation,
@@ -14,6 +15,7 @@ import { Context } from '../Context'
 import { User } from '../entities/User'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Like } from 'typeorm'
+import { PaginationArgs } from '../args/PaginationArgs'
 
 @Resolver(of => Topic)
 export class TopicResolver extends RepositoryInjector {
@@ -27,6 +29,20 @@ export class TopicResolver extends RepositoryInjector {
       })
       .loadRelationCountAndMap('topic.followerCount', 'topic.followers')
       .getOne()
+  }
+
+  @Query(returns => [Topic])
+  async popularTopics(@Args() { page, pageSize }: PaginationArgs) {
+    const topics = await this.topicRepository
+      .createQueryBuilder('topic')
+      .skip(page * pageSize)
+      .take(pageSize)
+      .loadRelationCountAndMap('topic.postCount', 'topic.posts', 'post', qb => {
+        return qb.andWhere('post.deleted = false')
+      })
+      .getMany()
+
+    return topics.sort((a, b) => b.postCount - a.postCount)
   }
 
   @Query(returns => [Topic])
