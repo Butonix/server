@@ -36,9 +36,6 @@ async function bootstrap() {
       await TypeORM.createConnection({
         type: 'postgres',
         url: process.env.DATABASE_URL,
-        extra: {
-          ssl: true,
-        },
         entities,
         synchronize: true,
         logging: false,
