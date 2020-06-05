@@ -87,7 +87,7 @@ async function bootstrap() {
     app.use(
       cors({
         origin:
-          process.env.NODE_ENV === 'production' ? 'https://getcomet.net' : 'http://localhost:8080',
+          process.env.NODE_ENV === 'production' ? 'https://getcomet.net' : 'http://localhost:3000',
         credentials: true,
       }),
     )
@@ -116,7 +116,7 @@ async function bootstrap() {
       app,
       cors: {
         origin:
-          process.env.NODE_ENV === 'production' ? 'https://getcomet.net' : 'http://localhost:8080',
+          process.env.NODE_ENV === 'production' ? 'https://getcomet.net' : 'http://localhost:3000',
         credentials: true,
       },
     })

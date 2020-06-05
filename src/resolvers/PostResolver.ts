@@ -101,7 +101,7 @@ export class PostResolver extends RepositoryInjector {
     return post
   }
 
-  @Mutation(returns => PostView)
+  @Mutation(returns => PostView, { nullable: true })
   async postView(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
     console.log('---------------------------postView---------------------------')
 
