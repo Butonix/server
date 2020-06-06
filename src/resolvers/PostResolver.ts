@@ -4,22 +4,18 @@ import {
   Ctx,
   FieldResolver,
   ID,
-  Int,
   Mutation,
   Query,
   Resolver,
   Root,
   UseMiddleware,
 } from 'type-graphql'
-import { Comment } from '../entities/Comment'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Post, PostType } from '../entities/Post'
-import { PaginationArgs } from '../args/PaginationArgs'
 import { SubmitPostArgs } from '../args/SubmitPostArgs'
 import { RequiresAuth } from '../RequiresAuth'
 import { Context } from '../Context'
 import shortid from 'shortid'
-import Mercury from '@postlight/mercury-parser'
 // @ts-ignore
 import isImageUrl from 'is-image-url'
 // @ts-ignore
@@ -154,22 +150,21 @@ export class PostResolver extends RepositoryInjector {
   ) {
     console.log('---------------------------submitPost---------------------------')
 
+    const url = new Url(link)
     let parseResult: any = null
     if (type === PostType.LINK) {
       if (isImageUrl(link)) {
-        const url = new Url(link)
         parseResult = {
           // eslint-disable-next-line @typescript-eslint/camelcase
           lead_image_url: link,
-          domain: url.hostname,
         }
       } else {
-        parseResult = await Mercury.parse(link)
-        if (!parseResult.lead_image_url) {
+        parseResult = {
           // eslint-disable-next-line @typescript-eslint/camelcase
-          parseResult.lead_image_url = await getThumbnailUrl(link)
+          lead_image_url: await getThumbnailUrl(link),
         }
       }
+      parseResult.domain = url.hostname
     }
 
     const postId = shortid.generate()

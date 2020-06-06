@@ -5,7 +5,13 @@ import axios from 'axios'
 export const getThumbnailUrl = async (link: string) => {
   const headers = { 'User-Agent': 'Comet thumbnails' }
 
-  let response = await axios.get(link, { headers })
+  let response
+
+  try {
+    response = await axios.get(link, { headers, timeout: 3000 })
+  } catch (e) {
+    return null
+  }
 
   let contentType = response.headers['content-type']
 
