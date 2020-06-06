@@ -16,6 +16,7 @@ import { SubmitPostArgs } from '../args/SubmitPostArgs'
 import { RequiresAuth } from '../RequiresAuth'
 import { Context } from '../Context'
 import shortid from 'shortid'
+import Mercury from '@postlight/mercury-parser'
 // @ts-ignore
 import isImageUrl from 'is-image-url'
 // @ts-ignore
@@ -159,9 +160,27 @@ export class PostResolver extends RepositoryInjector {
           lead_image_url: link,
         }
       } else {
-        parseResult = {
-          // eslint-disable-next-line @typescript-eslint/camelcase
-          lead_image_url: await getThumbnailUrl(link),
+        const longTask = () =>
+          new Promise(async resolve => {
+            try {
+              resolve(await Mercury.parse(link))
+            } catch (e) {
+              resolve({})
+            }
+          })
+
+        const timeout = (cb: any, interval: number) => () =>
+          new Promise(resolve => setTimeout(() => cb(resolve), interval))
+
+        const onTimeout = timeout((resolve: any) => resolve({}), 3000)
+
+        parseResult = await Promise.race([longTask, onTimeout].map(f => f()))
+
+        if (!parseResult.lead_image_url) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/camelcase
+            parseResult.lead_image_url = await getThumbnailUrl(link)
+          } catch (e) {}
         }
       }
       parseResult.domain = url.hostname
@@ -170,7 +189,7 @@ export class PostResolver extends RepositoryInjector {
     const postId = shortid.generate()
     let s3UploadLink = ''
 
-    if (parseResult && parseResult.lead_image_url) {
+    if (type === PostType.LINK && parseResult && parseResult.lead_image_url) {
       const response = await axios.get(parseResult.lead_image_url, { responseType: 'arraybuffer' })
       const isYoutube = parseResult.lead_image_url.includes('ytimg.com')
       const resizedImage = await sharp(response.data)
