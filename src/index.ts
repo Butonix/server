@@ -5,13 +5,13 @@ import { User } from './entities/User'
 import * as TypeORM from 'typeorm'
 import { Container } from 'typedi'
 import { Comment } from './entities/Comment'
-import { getUser, refreshToken } from './auth'
+import { getUser } from './auth'
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { ApolloServer } from 'apollo-server-express'
 import { Context } from './Context'
-import { CommentLoader, PostLoader, UserLoader } from './loaders'
+import { CommentLoader, PostLoader, PostViewLoader, UserLoader } from './loaders'
 import { Post, PostType } from './entities/Post'
 import { AuthResolver } from './resolvers/AuthResolver'
 import { PostResolver } from './resolvers/PostResolver'
@@ -79,7 +79,7 @@ async function bootstrap() {
           ? undefined
           : path.resolve(__dirname, 'schema.graphql'),
       container: Container,
-      validate: false,
+      validate: true,
     })
 
     const app = express()
@@ -94,8 +94,6 @@ async function bootstrap() {
 
     app.use(cookieParser())
 
-    app.post('/refresh_token', refreshToken)
-
     const server = new ApolloServer({
       schema,
       playground: process.env.NODE_ENV !== 'production',
@@ -108,6 +106,7 @@ async function bootstrap() {
           userLoader: UserLoader,
           postLoader: PostLoader,
           commentLoader: CommentLoader,
+          postViewLoader: PostViewLoader,
         } as Context
       },
     })

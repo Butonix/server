@@ -131,7 +131,4 @@ export class User {
    */
   @Field()
   isBlocking: boolean
-
-  @Column('int', { default: 0 })
-  tokenVersion: number
 }

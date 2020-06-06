@@ -21,6 +21,8 @@ import { PaginationArgs } from '../args/PaginationArgs'
 export class TopicResolver extends RepositoryInjector {
   @Query(returns => Topic, { nullable: true })
   async topic(@Arg('topicName') topicName: string) {
+    console.log('---------------------------topic---------------------------')
+
     return this.topicRepository
       .createQueryBuilder('topic')
       .andWhere('topic.name = :topicName', { topicName })
@@ -33,6 +35,8 @@ export class TopicResolver extends RepositoryInjector {
 
   @Query(returns => [Topic])
   async popularTopics(@Args() { page, pageSize }: PaginationArgs) {
+    console.log('---------------------------popularTopics---------------------------')
+
     const topics = await this.topicRepository
       .createQueryBuilder('topic')
       .skip(page * pageSize)
@@ -49,6 +53,8 @@ export class TopicResolver extends RepositoryInjector {
   async searchTopics(@Arg('search') search: string) {
     if (!search) return []
 
+    console.log('---------------------------searchTopics---------------------------')
+
     return this.topicRepository.find({
       name: Like(search.toLowerCase().replace(/ /g, '_') + '%'),
     })
@@ -57,6 +63,8 @@ export class TopicResolver extends RepositoryInjector {
   @Query(returns => [Topic])
   async followedTopics(@Ctx() { userId }: Context) {
     if (!userId) return []
+
+    console.log('---------------------------followedTopics---------------------------')
 
     const topics = await this.userRepository
       .createQueryBuilder()
@@ -70,6 +78,8 @@ export class TopicResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async followTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
+    console.log('---------------------------topicName---------------------------')
+
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
@@ -81,6 +91,8 @@ export class TopicResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async unfollowTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
+    console.log('---------------------------unfollowTopic---------------------------')
+
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
@@ -92,6 +104,8 @@ export class TopicResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async hideTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
+    console.log('---------------------------hideTopic---------------------------')
+
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
@@ -109,6 +123,8 @@ export class TopicResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async unhideTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
+    console.log('---------------------------unhideTopic---------------------------')
+
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'hiddenTopics')
@@ -130,6 +146,8 @@ export class TopicResolver extends RepositoryInjector {
   async isFollowing(@Root() topic: Topic, @Ctx() { userId }: Context) {
     if (!userId) return false
 
+    console.log('---------------------------isFollowing---------------------------')
+
     const user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: userId })
@@ -144,6 +162,8 @@ export class TopicResolver extends RepositoryInjector {
   @FieldResolver()
   async isHidden(@Root() topic: Topic, @Ctx() { userId }: Context) {
     if (!userId) return false
+
+    console.log('---------------------------isHidden---------------------------')
 
     const user = await this.userRepository
       .createQueryBuilder('user')

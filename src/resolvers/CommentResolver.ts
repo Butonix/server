@@ -26,6 +26,8 @@ export class CommentResolver extends RepositoryInjector {
     @Args() { textContent, postId, parentCommentId }: SubmitCommentArgs,
     @Ctx() { userId }: Context,
   ) {
+    console.log('---------------------------submitComment---------------------------')
+
     if (!textContent) throw new Error('textContent cannot be empty')
 
     return this.commentRepository.save({
@@ -76,6 +78,8 @@ export class CommentResolver extends RepositoryInjector {
     @Arg('commentId', type => ID) commentId: string,
     @Ctx() { userId }: Context,
   ) {
+    console.log('---------------------------toggleCommentEndorsement---------------------------')
+
     const comment = await this.commentRepository
       .createQueryBuilder('comment')
       .whereInIds(commentId)

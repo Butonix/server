@@ -5,7 +5,7 @@ import { Context } from '../Context'
 import { User } from '../entities/User'
 import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
-import { createAccessToken, createRefreshToken, sendRefreshToken } from '../auth'
+import { createAccessToken } from '../auth'
 import * as argon2 from 'argon2'
 
 @Resolver()
@@ -14,6 +14,8 @@ export class AuthResolver {
 
   @Mutation(returns => LoginResponse)
   async signUp(@Args() { username, password }: LoginArgs, @Ctx() { req, res }: Context) {
+    console.log('---------------------------signUp---------------------------')
+
     const foundUser = await this.userRepository.findOne({ username })
     if (foundUser) throw new Error('Username taken')
 
@@ -26,8 +28,6 @@ export class AuthResolver {
       lastLogin: new Date(),
     } as User)
 
-    sendRefreshToken(res, createRefreshToken(user))
-
     return {
       accessToken: createAccessToken(user),
       user,
@@ -36,6 +36,8 @@ export class AuthResolver {
 
   @Mutation(returns => LoginResponse)
   async login(@Args() { username, password }: LoginArgs, @Ctx() { req, res }: Context) {
+    console.log('---------------------------login---------------------------')
+
     const user = await this.userRepository.findOne({ username })
     if (!user) throw new Error('Invalid Login')
 
@@ -50,18 +52,9 @@ export class AuthResolver {
 
     if (!match) throw new Error('Invalid Login')
 
-    sendRefreshToken(res, createRefreshToken(user))
-
     return {
       accessToken: createAccessToken(user),
       user,
     } as LoginResponse
-  }
-
-  @Mutation(() => Boolean)
-  async logout(@Ctx() { req, res }: Context) {
-    sendRefreshToken(res, '')
-
-    return true
   }
 }

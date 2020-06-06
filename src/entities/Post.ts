@@ -106,4 +106,7 @@ export class Post {
 
   @Column({ default: false })
   deleted: boolean
+
+  @Field({ nullable: true })
+  postView: PostView
 }

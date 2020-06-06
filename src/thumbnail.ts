@@ -3,7 +3,9 @@ import JSSoup from 'jssoup'
 import axios from 'axios'
 
 export const getThumbnailUrl = async (link: string) => {
-  let response = await axios.get(link)
+  const headers = { 'User-Agent': 'Comet thumbnails' }
+
+  let response = await axios.get(link, { headers })
 
   let contentType = response.headers['content-type']
 
@@ -22,7 +24,7 @@ export const getThumbnailUrl = async (link: string) => {
       img = soup.find('meta', { name: meta })
       if (!img) continue
       try {
-        response = await axios.get(img.attrs.content)
+        response = await axios.get(img.attrs.content, { headers })
       } catch (e) {
         continue
       }
@@ -46,7 +48,7 @@ export const getThumbnailUrl = async (link: string) => {
           src = `${link}${link.endsWith('/') ? '' : '/'}${src}`
         }
 
-        response = await axios.get(src)
+        response = await axios.get(src, { headers })
 
         if (response.status !== 200) continue
 

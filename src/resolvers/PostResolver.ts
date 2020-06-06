@@ -30,6 +30,16 @@ import { PostView } from '../entities/PostView'
 // @ts-ignore
 import getTitleAtUrl from 'get-title-at-url'
 import { FeedArgs } from '../args/FeedArgs'
+import AWS from 'aws-sdk'
+import axios from 'axios'
+import sharp from 'sharp'
+
+const s3 = new AWS.S3({
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+})
 
 @Resolver(of => Post)
 export class PostResolver extends RepositoryInjector {
@@ -42,6 +52,8 @@ export class PostResolver extends RepositoryInjector {
 
   @Query(returns => [Post])
   async homeFeed(@Args() { page, pageSize, sort, time }: FeedArgs, @Ctx() { userId }: Context) {
+    console.log('---------------------------homeFeed---------------------------')
+
     const qb = this.postRepository
       .createQueryBuilder('post')
       .addOrderBy('post.createdAt', 'DESC')
@@ -102,7 +114,7 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @Mutation(returns => PostView, { nullable: true })
-  async postView(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+  async recordPostView(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
     console.log('---------------------------postView---------------------------')
 
     if (!userId) return null
@@ -140,6 +152,8 @@ export class PostResolver extends RepositoryInjector {
     @Args() { title, type, link, textContent, topics }: SubmitPostArgs,
     @Ctx() { userId }: Context,
   ) {
+    console.log('---------------------------submitPost---------------------------')
+
     let parseResult: any = null
     if (type === PostType.LINK) {
       if (isImageUrl(link)) {
@@ -158,19 +172,41 @@ export class PostResolver extends RepositoryInjector {
       }
     }
 
+    const postId = shortid.generate()
+    let s3UploadLink = ''
+
+    if (parseResult && parseResult.lead_image_url) {
+      const response = await axios.get(parseResult.lead_image_url, { responseType: 'arraybuffer' })
+      const isYoutube = parseResult.lead_image_url.includes('ytimg.com')
+      const resizedImage = await sharp(response.data)
+        .resize(isYoutube ? 128 : 72, 72)
+        .jpeg()
+        .toBuffer()
+
+      s3UploadLink = await new Promise((resolve, reject) =>
+        s3.upload(
+          { Bucket: 'comet-thumbs', Key: `${postId}.jpeg`, Body: resizedImage },
+          (err, data) => {
+            if (err) reject(err)
+            else resolve(data.Location)
+          },
+        ),
+      )
+    }
+
     const savedTopics = await this.topicRepository.save(
       topics.map(topic => ({ name: topic.toLowerCase().replace(/ /g, '_') } as Topic)),
     )
 
     return this.postRepository.save({
-      id: shortid.generate(),
+      id: postId,
       title,
       type,
       link,
       textContent,
       createdAt: new Date(),
       authorId: userId,
-      thumbnailUrl: parseResult ? parseResult.lead_image_url : undefined,
+      thumbnailUrl: s3UploadLink ? s3UploadLink : undefined,
       domain: parseResult ? parseResult.domain.replace('www.', '') : undefined,
       topics: savedTopics,
     } as Post)
@@ -179,6 +215,8 @@ export class PostResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async deletePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+    console.log('---------------------------deletePost---------------------------')
+
     const post = await this.postRepository.findOne({ id: postId })
     if (post.authorId !== userId)
       throw new Error('Attempt to delete post by someone other than author')
@@ -199,6 +237,8 @@ export class PostResolver extends RepositoryInjector {
     @Arg('postId', type => ID) postId: string,
     @Ctx() { userId }: Context,
   ) {
+    console.log('---------------------------togglePostEndorsement---------------------------')
+
     const post = await this.postRepository
       .createQueryBuilder('post')
       .whereInIds(postId)
@@ -247,10 +287,14 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @FieldResolver()
+  async postView(@Root() post: Post, @Ctx() { postViewLoader, userId }: Context) {
+    return postViewLoader.load({ postId: post.id, userId })
+  }
+
+  @FieldResolver()
   async newCommentCount(@Root() post: Post, @Ctx() { userId }: Context) {
     if (!userId) return -1
-    const postView = await this.postViewRepository.findOne({ userId, postId: post.id })
-    if (!postView) return -1
-    return post.commentCount - postView.lastCommentCount
+    if (!post.postView) return -1
+    return post.commentCount - post.postView.lastCommentCount
   }
 }
