@@ -46,7 +46,7 @@ export class PostResolver extends RepositoryInjector {
   @Query(returns => String)
   async getTitleAtUrl(@Arg('url') url: string) {
     return await new Promise(resolve => {
-      getTitleAtUrl(url, (title: any) => resolve(title))
+      getTitleAtUrl(url, (title: any) => resolve(title ? title : ''))
     })
   }
 
