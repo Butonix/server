@@ -26,10 +26,11 @@ import { getThumbnailUrl } from '../thumbnail'
 import { PostView } from '../entities/PostView'
 // @ts-ignore
 import getTitleAtUrl from 'get-title-at-url'
-import { FeedArgs } from '../args/FeedArgs'
+import { FeedArgs, Filter, Sort, Time } from '../args/FeedArgs'
 import AWS from 'aws-sdk'
 import axios from 'axios'
 import sharp from 'sharp'
+import { User } from '../entities/User'
 
 const s3 = new AWS.S3({
   credentials: {
@@ -48,19 +49,81 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @Query(returns => [Post])
-  async homeFeed(@Args() { page, pageSize, sort, time }: FeedArgs, @Ctx() { userId }: Context) {
+  async homeFeed(
+    @Args() { page, pageSize, sort, time, filter }: FeedArgs,
+    @Ctx() { userId }: Context,
+  ) {
     console.log('---------------------------homeFeed---------------------------')
 
-    const qb = this.postRepository
-      .createQueryBuilder('post')
-      .addOrderBy('post.createdAt', 'DESC')
-      .andWhere('post.deleted = false')
-      .leftJoinAndSelect('post.topics', 'topic')
-      .skip(page * pageSize)
-      .take(pageSize)
-      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+    const qb = this.postRepository.createQueryBuilder('post').andWhere('post.deleted = false')
+
+    if (sort === Sort.NEW) {
+      qb.addOrderBy('post.createdAt', 'DESC')
+    } else if (sort === Sort.HOT) {
+      qb.addSelect(
+        'CAST(post.endorsementCount AS float)/((CAST((CAST(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS int) - CAST(EXTRACT(EPOCH FROM post.createdAt) AS int)+100000) AS FLOAT)/6.0)^(1.0/3.0))',
+        'post_hotrank',
+      )
+      qb.addOrderBy('post_hotrank', 'DESC')
+    } else if (sort === Sort.TOP) {
+      switch (time) {
+        case Time.HOUR:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 hour'")
+          break
+        case Time.DAY:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 day'")
+          break
+        case Time.WEEK:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 week'")
+          break
+        case Time.MONTH:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 month'")
+          break
+        case Time.YEAR:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 year'")
+          break
+        case Time.ALL:
+          break
+        default:
+          break
+      }
+      qb.addOrderBy('post.endorsementCount', 'DESC')
+      qb.addOrderBy('post.createdAt', 'DESC')
+    }
+
+    if (filter === Filter.FOLLOWING && userId) {
+      const followedTopics = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'followedTopics')
+          .of(userId)
+          .loadMany()
+      ).map(topic => topic.name)
+
+      if (followedTopics.length > 0) {
+        qb.andWhere(
+          'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:followedTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) > 0',
+        ).setParameter('followedTopics', followedTopics)
+      } else {
+        return []
+      }
+    }
 
     if (userId) {
+      const hiddenTopics = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'hiddenTopics')
+          .of(userId)
+          .loadMany()
+      ).map(topic => topic.name)
+
+      if (hiddenTopics.length > 0) {
+        qb.andWhere(
+          'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0',
+        ).setParameter('hiddenTopics', hiddenTopics)
+      }
+
       qb.loadRelationCountAndMap(
         'post.personalEndorsementCount',
         'post.endorsements',
@@ -72,7 +135,13 @@ export class PostResolver extends RepositoryInjector {
         },
       )
     }
-    const posts = await qb.getMany()
+
+    const posts = await qb
+      .skip(page * pageSize)
+      .take(pageSize)
+      .leftJoinAndSelect('post.topics', 'topic')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .getMany()
 
     posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
 
@@ -223,6 +292,7 @@ export class PostResolver extends RepositoryInjector {
       thumbnailUrl: s3UploadLink ? s3UploadLink : undefined,
       domain: parseResult ? parseResult.domain.replace('www.', '') : undefined,
       topics: savedTopics,
+      topicsarr: savedTopics.map(topic => topic.name),
     } as Post)
   }
 

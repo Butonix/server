@@ -16,6 +16,9 @@ import { User } from '../entities/User'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Like } from 'typeorm'
 import { PaginationArgs } from '../args/PaginationArgs'
+import { Post } from '../entities/Post'
+import { FeedArgs, Filter, Sort, Time } from '../args/FeedArgs'
+import { TopicFeedArgs } from '../args/TopicFeedArgs'
 
 @Resolver(of => Topic)
 export class TopicResolver extends RepositoryInjector {
@@ -73,6 +76,91 @@ export class TopicResolver extends RepositoryInjector {
       .loadMany()
 
     return topics.sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  @Query(returns => [Post])
+  async topicFeed(
+    @Args() { page, pageSize, sort, time, topicName }: TopicFeedArgs,
+    @Ctx() { userId }: Context,
+  ) {
+    console.log('---------------------------topicFeed---------------------------')
+
+    const qb = this.postRepository
+      .createQueryBuilder('post')
+      .andWhere('post.deleted = false')
+      .andWhere(':topicName = ANY(post.topicsarr)', { topicName })
+
+    if (sort === Sort.NEW) {
+      qb.addOrderBy('post.createdAt', 'DESC')
+    } else if (sort === Sort.HOT) {
+      qb.addSelect(
+        'CAST(post.endorsementCount AS float)/((CAST((CAST(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS int) - CAST(EXTRACT(EPOCH FROM post.createdAt) AS int)+100000) AS FLOAT)/6.0)^(1.0/3.0))',
+        'post_hotrank',
+      )
+      qb.addOrderBy('post_hotrank', 'DESC')
+    } else if (sort === Sort.TOP) {
+      switch (time) {
+        case Time.HOUR:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 hour'")
+          break
+        case Time.DAY:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 day'")
+          break
+        case Time.WEEK:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 week'")
+          break
+        case Time.MONTH:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 month'")
+          break
+        case Time.YEAR:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 year'")
+          break
+        case Time.ALL:
+          break
+        default:
+          break
+      }
+      qb.addOrderBy('post.endorsementCount', 'DESC')
+      qb.addOrderBy('post.createdAt', 'DESC')
+    }
+
+    if (userId) {
+      const hiddenTopics = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'hiddenTopics')
+          .of(userId)
+          .loadMany()
+      ).map(topic => topic.name)
+
+      if (hiddenTopics.length > 0) {
+        qb.andWhere(
+          'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0',
+        ).setParameter('hiddenTopics', hiddenTopics)
+      }
+
+      qb.loadRelationCountAndMap(
+        'post.personalEndorsementCount',
+        'post.endorsements',
+        'endorsement',
+        qb => {
+          return qb
+            .andWhere('endorsement.active = true')
+            .andWhere('endorsement.userId = :userId', { userId })
+        },
+      )
+    }
+
+    const posts = await qb
+      .skip(page * pageSize)
+      .take(pageSize)
+      .leftJoinAndSelect('post.topics', 'topic')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .getMany()
+
+    posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
+
+    return posts
   }
 
   @UseMiddleware(RequiresAuth)

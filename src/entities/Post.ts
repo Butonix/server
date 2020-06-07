@@ -69,6 +69,9 @@ export class Post {
   )
   topics: Lazy<Topic[]>
 
+  @Column('text', { array: true })
+  topicsarr: string[]
+
   @OneToMany(
     type => PostEndorsement,
     endorsement => endorsement.post,

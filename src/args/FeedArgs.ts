@@ -2,25 +2,33 @@ import { ArgsType, Field } from 'type-graphql'
 import { PaginationArgs } from './PaginationArgs'
 
 export enum Sort {
-  NEW = 'NEW',
-  TOP = 'TOP',
-  HOT = 'HOT',
+  NEW = 'new',
+  TOP = 'top',
+  HOT = 'hot',
 }
 
 export enum Time {
-  HOUR = 'HOUR',
-  DAY = 'DAY',
-  WEEK = 'WEEK',
-  MONTH = 'MONTH',
-  YEAR = 'YEAR',
-  ALL = 'ALL',
+  HOUR = 'hour',
+  DAY = 'day',
+  WEEK = 'week',
+  MONTH = 'month',
+  YEAR = 'year',
+  ALL = 'all',
+}
+
+export enum Filter {
+  ALL = 'all',
+  FOLLOWING = 'following',
 }
 
 @ArgsType()
 export class FeedArgs extends PaginationArgs {
   @Field(type => Sort, { defaultValue: Sort.HOT })
-  sort: Sort
+  sort: Sort = Sort.HOT
 
-  @Field(type => Time, { defaultValue: Time.DAY })
-  time: Time
+  @Field(type => Time, { defaultValue: Time.ALL })
+  time: Time = Time.ALL
+
+  @Field(type => Filter, { defaultValue: Filter.ALL })
+  filter: Filter = Filter.ALL
 }
