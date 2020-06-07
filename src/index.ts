@@ -23,13 +23,21 @@ import { TopicResolver } from './resolvers/TopicResolver'
 import { CommentResolver } from './resolvers/CommentResolver'
 import { PostView } from './entities/PostView'
 import { Filter, Sort, Time } from './args/FeedArgs'
+import { FiltersResolver } from './resolvers/FiltersResolver'
 
 // register 3rd party IOC container
 TypeORM.useContainer(Container)
 
 async function bootstrap() {
   const entities = [User, Comment, Post, PostEndorsement, CommentEndorsement, Topic, PostView]
-  const resolvers = [PostResolver, UserResolver, AuthResolver, TopicResolver, CommentResolver]
+  const resolvers = [
+    PostResolver,
+    UserResolver,
+    AuthResolver,
+    TopicResolver,
+    CommentResolver,
+    FiltersResolver,
+  ]
 
   try {
     if (process.env.NODE_ENV === 'production') {
