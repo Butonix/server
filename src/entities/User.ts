@@ -23,13 +23,14 @@ export class User {
   @Column()
   createdAt: Date
 
-  @Field()
   @Column()
   lastLogin: Date
 
-  @Field()
   @Column()
   passwordHash: string
+
+  @Column({ default: false })
+  admin: boolean
 
   @OneToMany(
     type => Comment,
@@ -69,7 +70,7 @@ export class User {
 
   @ManyToMany(
     type => User,
-    user => user.blocking,
+    user => user.blockedUsers,
   )
   @JoinTable()
   blockedBy: Lazy<User[]>
@@ -78,7 +79,7 @@ export class User {
     type => User,
     user => user.blockedBy,
   )
-  blocking: Lazy<User[]>
+  blockedUsers: Lazy<User[]>
 
   /**
    * Current user is following this user

@@ -180,7 +180,7 @@ export class UserResolver extends RepositoryInjector {
 
     await this.userRepository
       .createQueryBuilder('user')
-      .relation(User, 'blocking')
+      .relation(User, 'blockedUsers')
       .of(userId)
       .add(blockedId)
     return true
@@ -197,7 +197,7 @@ export class UserResolver extends RepositoryInjector {
 
     await this.userRepository
       .createQueryBuilder('user')
-      .relation(User, 'blocking')
+      .relation(User, 'blockedUsers')
       .of(userId)
       .remove(blockedId)
     return true
@@ -246,12 +246,12 @@ export class UserResolver extends RepositoryInjector {
     user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: user.id })
-      .leftJoinAndSelect('user.blocking', 'targetUser', 'targetUser.id = :targetId', {
+      .leftJoinAndSelect('user.blockedUsers', 'targetUser', 'targetUser.id = :targetId', {
         targetId: userId,
       })
       .getOne()
 
-    return Boolean((await user.blocking).length)
+    return Boolean((await user.blockedUsers).length)
   }
 
   @FieldResolver(returns => Boolean)
@@ -263,12 +263,12 @@ export class UserResolver extends RepositoryInjector {
     user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: userId })
-      .leftJoinAndSelect('user.blocking', 'targetUser', 'targetUser.id = :targetId', {
+      .leftJoinAndSelect('user.blockedUsers', 'targetUser', 'targetUser.id = :targetId', {
         targetId: user.id,
       })
       .getOne()
 
-    return Boolean((await user.blocking).length)
+    return Boolean((await user.blockedUsers).length)
   }
 
   @FieldResolver(returns => Boolean)

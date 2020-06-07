@@ -22,6 +22,9 @@ export class Topic {
   @PrimaryColumn()
   name: string
 
+  @Column('int', { select: false, default: 0 })
+  total: number
+
   @ManyToMany(
     type => Post,
     post => post.topics,

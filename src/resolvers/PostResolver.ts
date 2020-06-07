@@ -55,7 +55,10 @@ export class PostResolver extends RepositoryInjector {
   ) {
     console.log('---------------------------homeFeed---------------------------')
 
-    const qb = this.postRepository.createQueryBuilder('post').andWhere('post.deleted = false')
+    const qb = this.postRepository
+      .createQueryBuilder('post')
+      .andWhere('post.deleted = false')
+      .andWhere('post.sticky = false')
 
     if (sort === Sort.NEW) {
       qb.addOrderBy('post.createdAt', 'DESC')
@@ -124,6 +127,16 @@ export class PostResolver extends RepositoryInjector {
         ).setParameter('hiddenTopics', hiddenTopics)
       }
 
+      const blockedUsers = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'blockedUsers')
+          .of(userId)
+          .loadMany()
+      ).map(user => user.id)
+
+      qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
+
       qb.loadRelationCountAndMap(
         'post.personalEndorsementCount',
         'post.endorsements',
@@ -142,6 +155,34 @@ export class PostResolver extends RepositoryInjector {
       .leftJoinAndSelect('post.topics', 'topic')
       .loadRelationCountAndMap('post.commentCount', 'post.comments')
       .getMany()
+
+    posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
+
+    return posts
+  }
+
+  @Query(returns => [Post])
+  async globalStickies(@Ctx() { userId }: Context) {
+    const qb = this.postRepository
+      .createQueryBuilder('post')
+      .andWhere('post.sticky = TRUE')
+      .leftJoinAndSelect('post.topics', 'topic')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+
+    if (userId) {
+      qb.loadRelationCountAndMap(
+        'post.personalEndorsementCount',
+        'post.endorsements',
+        'endorsement',
+        qb => {
+          return qb
+            .andWhere('endorsement.active = true')
+            .andWhere('endorsement.userId = :userId', { userId })
+        },
+      )
+    }
+
+    const posts = await qb.getMany()
 
     posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
 

@@ -37,19 +37,25 @@ export class TopicResolver extends RepositoryInjector {
   }
 
   @Query(returns => [Topic])
-  async popularTopics(@Args() { page, pageSize }: PaginationArgs) {
+  async popularTopics() {
     console.log('---------------------------popularTopics---------------------------')
 
     const topics = await this.topicRepository
       .createQueryBuilder('topic')
-      .skip(page * pageSize)
-      .take(pageSize)
-      .loadRelationCountAndMap('topic.postCount', 'topic.posts', 'post', qb => {
-        return qb.andWhere('post.deleted = false')
-      })
+      .addSelect('COUNT(posts.id)', 'topic_total')
+      .leftJoin(
+        'topic.posts',
+        'posts',
+        "posts.deleted = false AND posts.createdAt > NOW() - INTERVAL '1 day'",
+      )
+      .groupBy('topic.name')
+      .orderBy('topic_total', 'DESC')
+      .take(10)
       .getMany()
 
-    return topics.sort((a, b) => b.postCount - a.postCount)
+    topics.forEach(topic => (topic.postCount = topic.total))
+
+    return topics
   }
 
   @Query(returns => [Topic])
@@ -58,9 +64,11 @@ export class TopicResolver extends RepositoryInjector {
 
     console.log('---------------------------searchTopics---------------------------')
 
-    return this.topicRepository.find({
-      name: Like(search.toLowerCase().replace(/ /g, '_') + '%'),
-    })
+    return this.topicRepository
+      .createQueryBuilder('topic')
+      .where('topic.name LIKE :name', { name: search.toLowerCase().replace(/ /g, '_') + '%' })
+      .take(10)
+      .getMany()
   }
 
   @Query(returns => [Topic])
@@ -69,13 +77,24 @@ export class TopicResolver extends RepositoryInjector {
 
     console.log('---------------------------followedTopics---------------------------')
 
-    const topics = await this.userRepository
+    let topics = await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
       .of(userId)
       .loadMany()
 
-    return topics.sort((a, b) => a.name.localeCompare(b.name))
+    topics = await this.topicRepository
+      .createQueryBuilder('topic')
+      .whereInIds(topics.map(topic => topic.name))
+      .addOrderBy('topic.name', 'ASC')
+      .loadRelationCountAndMap('topic.postCount', 'topic.posts', 'post', qb => {
+        return qb
+          .andWhere('post.deleted = false')
+          .andWhere("post.createdAt > NOW() - INTERVAL '1 day'")
+      })
+      .getMany()
+
+    return topics
   }
 
   @Query(returns => [Post])
@@ -138,6 +157,16 @@ export class TopicResolver extends RepositoryInjector {
           'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0',
         ).setParameter('hiddenTopics', hiddenTopics)
       }
+
+      const blockedUsers = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'blockedUsers')
+          .of(userId)
+          .loadMany()
+      ).map(user => user.id)
+
+      qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
 
       qb.loadRelationCountAndMap(
         'post.personalEndorsementCount',

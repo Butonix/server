@@ -1,6 +1,6 @@
 import { ArgsType, Field } from 'type-graphql'
 import { PostType } from '../entities/Post'
-import { Length, ArrayMaxSize, ArrayMinSize } from 'class-validator'
+import { Length, ArrayMaxSize, ArrayMinSize, ArrayUnique, Matches } from 'class-validator'
 
 @ArgsType()
 export class SubmitPostArgs {
@@ -20,7 +20,10 @@ export class SubmitPostArgs {
   textContent?: string
 
   @Field(type => [String])
-  @ArrayMaxSize(30)
+  @ArrayMaxSize(10)
   @ArrayMinSize(1)
+  @ArrayUnique()
+  @Matches(/^[a-z0-9 ]+$/i, { each: true })
+  @Length(1, 50, { each: true })
   topics: string[]
 }

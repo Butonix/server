@@ -53,6 +53,9 @@ export class Post {
   @Column()
   createdAt: Date
 
+  @Column({ default: false })
+  sticky: boolean
+
   @OneToMany(
     type => Comment,
     comment => comment.post,
@@ -82,7 +85,7 @@ export class Post {
   @Column({ default: 0 })
   endorsementCount: number
 
-  personalEndorsementCount: number
+  personalEndorsementCount = 0
 
   @OneToMany(
     type => PostView,
