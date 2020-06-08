@@ -57,7 +57,7 @@ export class UserResolver extends RepositoryInjector {
   ) {
     const user = await this.userRepository.findOne({ username })
 
-    if (!user) throw new Error('User not found')
+    if (!user) return []
 
     const qb = this.commentRepository
       .createQueryBuilder('comment')
@@ -94,7 +94,7 @@ export class UserResolver extends RepositoryInjector {
   ) {
     const user = await this.userRepository.findOne({ username })
 
-    if (!user) throw new Error('User not found')
+    if (!user) return []
 
     const qb = this.postRepository
       .createQueryBuilder('post')

@@ -56,7 +56,8 @@ export class CommentResolver extends RepositoryInjector {
   @Query(returns => [Comment])
   async postComments(@Args() { postId, sort }: PostCommentsArgs, @Ctx() { userId }: Context) {
     const post = await this.postRepository.findOne({ id: postId })
-    if (!post) throw new Error('Invalid post ID')
+
+    if (!post) return []
 
     const qb = await this.commentRepository
       .createQueryBuilder('comment')
