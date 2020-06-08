@@ -24,8 +24,6 @@ import { TopicFeedArgs } from '../args/TopicFeedArgs'
 export class TopicResolver extends RepositoryInjector {
   @Query(returns => Topic, { nullable: true })
   async topic(@Arg('topicName') topicName: string) {
-    console.log('---------------------------topic---------------------------')
-
     return this.topicRepository
       .createQueryBuilder('topic')
       .andWhere('topic.name = :topicName', { topicName })
@@ -38,8 +36,6 @@ export class TopicResolver extends RepositoryInjector {
 
   @Query(returns => [Topic])
   async popularTopics() {
-    console.log('---------------------------popularTopics---------------------------')
-
     const topics = await this.topicRepository
       .createQueryBuilder('topic')
       .addSelect('COUNT(posts.id)', 'topic_total')
@@ -62,8 +58,6 @@ export class TopicResolver extends RepositoryInjector {
   async searchTopics(@Arg('search') search: string) {
     if (!search) return []
 
-    console.log('---------------------------searchTopics---------------------------')
-
     return this.topicRepository
       .createQueryBuilder('topic')
       .where('topic.name LIKE :name', { name: search.toLowerCase().replace(/ /g, '_') + '%' })
@@ -75,13 +69,13 @@ export class TopicResolver extends RepositoryInjector {
   async followedTopics(@Ctx() { userId }: Context) {
     if (!userId) return []
 
-    console.log('---------------------------followedTopics---------------------------')
-
     let topics = await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
       .of(userId)
       .loadMany()
+
+    if (topics.length === 0) return []
 
     topics = await this.topicRepository
       .createQueryBuilder('topic')
@@ -102,8 +96,6 @@ export class TopicResolver extends RepositoryInjector {
     @Args() { page, pageSize, sort, time, topicName }: TopicFeedArgs,
     @Ctx() { userId }: Context,
   ) {
-    console.log('---------------------------topicFeed---------------------------')
-
     const qb = this.postRepository
       .createQueryBuilder('post')
       .andWhere('post.deleted = false')
@@ -205,8 +197,6 @@ export class TopicResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async followTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
-    console.log('---------------------------topicName---------------------------')
-
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
@@ -218,8 +208,6 @@ export class TopicResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async unfollowTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
-    console.log('---------------------------unfollowTopic---------------------------')
-
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
@@ -231,8 +219,6 @@ export class TopicResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async hideTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
-    console.log('---------------------------hideTopic---------------------------')
-
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
@@ -250,8 +236,6 @@ export class TopicResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async unhideTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
-    console.log('---------------------------unhideTopic---------------------------')
-
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'hiddenTopics')
@@ -273,8 +257,6 @@ export class TopicResolver extends RepositoryInjector {
   async isFollowing(@Root() topic: Topic, @Ctx() { userId }: Context) {
     if (!userId) return false
 
-    console.log('---------------------------isFollowing---------------------------')
-
     const user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: userId })
@@ -289,8 +271,6 @@ export class TopicResolver extends RepositoryInjector {
   @FieldResolver()
   async isHidden(@Root() topic: Topic, @Ctx() { userId }: Context) {
     if (!userId) return false
-
-    console.log('---------------------------isHidden---------------------------')
 
     const user = await this.userRepository
       .createQueryBuilder('user')

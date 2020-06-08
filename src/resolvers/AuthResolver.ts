@@ -14,8 +14,6 @@ export class AuthResolver {
 
   @Mutation(returns => LoginResponse)
   async signUp(@Args() { username, password }: LoginArgs, @Ctx() { req, res }: Context) {
-    console.log('---------------------------signUp---------------------------')
-
     const foundUser = await this.userRepository.findOne({ username })
     if (foundUser) throw new Error('Username taken')
 
@@ -36,10 +34,10 @@ export class AuthResolver {
 
   @Mutation(returns => LoginResponse)
   async login(@Args() { username, password }: LoginArgs, @Ctx() { req, res }: Context) {
-    console.log('---------------------------login---------------------------')
-
     const user = await this.userRepository.findOne({ username })
     if (!user) throw new Error('Invalid Login')
+
+    if (user.banned) throw new Error('Banned: ' + user.banReason)
 
     await this.userRepository
       .createQueryBuilder()

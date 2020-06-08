@@ -32,6 +32,7 @@ import axios from 'axios'
 import sharp from 'sharp'
 import { User } from '../entities/User'
 import { SearchPostsArgs } from '../args/SearchPostsArgs'
+import { differenceInSeconds } from 'date-fns'
 
 const s3 = new AWS.S3({
   credentials: {
@@ -54,8 +55,6 @@ export class PostResolver extends RepositoryInjector {
     @Args() { page, pageSize, search, sort, time }: SearchPostsArgs,
     @Ctx() { userId }: Context,
   ) {
-    console.log('---------------------------searchPosts---------------------------')
-
     if (!search) return []
 
     const qb = this.postRepository
@@ -160,8 +159,6 @@ export class PostResolver extends RepositoryInjector {
     @Args() { page, pageSize, sort, time, filter }: FeedArgs,
     @Ctx() { userId }: Context,
   ) {
-    console.log('---------------------------homeFeed---------------------------')
-
     const qb = this.postRepository
       .createQueryBuilder('post')
       .andWhere('post.deleted = false')
@@ -346,8 +343,6 @@ export class PostResolver extends RepositoryInjector {
 
   @Query(returns => Post, { nullable: true })
   async post(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
-    console.log('---------------------------post---------------------------')
-
     const qb = this.postRepository
       .createQueryBuilder('post')
       .where('post.id = :postId', { postId })
@@ -378,8 +373,6 @@ export class PostResolver extends RepositoryInjector {
 
   @Mutation(returns => PostView, { nullable: true })
   async recordPostView(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
-    console.log('---------------------------postView---------------------------')
-
     if (!userId) return null
 
     let postView = await this.postViewRepository.findOne({ postId, userId })
@@ -417,7 +410,15 @@ export class PostResolver extends RepositoryInjector {
     @Args() { title, type, link, textContent, topics }: SubmitPostArgs,
     @Ctx() { userId }: Context,
   ) {
-    console.log('---------------------------submitPost---------------------------')
+    const user = await this.userRepository.findOne(userId)
+
+    if (user.lastPostedAt && !user.admin) {
+      if (differenceInSeconds(new Date(), user.lastPostedAt) < 60 * 3) {
+        throw new Error('Please wait 3 minutes between posts')
+      }
+    }
+
+    this.userRepository.update(userId, { lastPostedAt: new Date() })
 
     const url = new Url(link)
     let parseResult: any = null
@@ -498,8 +499,6 @@ export class PostResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async deletePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
-    console.log('---------------------------deletePost---------------------------')
-
     const post = await this.postRepository.findOne({ id: postId })
     if (post.authorId !== userId)
       throw new Error('Attempt to delete post by someone other than author')
@@ -520,8 +519,6 @@ export class PostResolver extends RepositoryInjector {
     @Arg('postId', type => ID) postId: string,
     @Ctx() { userId }: Context,
   ) {
-    console.log('---------------------------togglePostEndorsement---------------------------')
-
     const post = await this.postRepository
       .createQueryBuilder('post')
       .whereInIds(postId)
@@ -567,8 +564,6 @@ export class PostResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async hidePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
-    console.log('---------------------------hidePost---------------------------')
-
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'hiddenPosts')
@@ -586,8 +581,6 @@ export class PostResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async unhidePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
-    console.log('---------------------------unhidePost---------------------------')
-
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'hiddenPosts')

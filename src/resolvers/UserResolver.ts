@@ -27,21 +27,19 @@ export class UserResolver extends RepositoryInjector {
       return null
     }
 
-    console.log('---------------------------currentUser---------------------------')
-
     return this.userRepository
       .createQueryBuilder('user')
       .whereInIds(userId)
+      .andWhere('user.banned = false')
       .getOne()
   }
 
   @Query(returns => User, { nullable: true })
   async user(@Arg('username') username: string) {
-    console.log('---------------------------user---------------------------')
-
     return this.userRepository
       .createQueryBuilder('user')
       .where('user.username = :username', { username })
+      .andWhere('user.banned = false')
       .loadRelationCountAndMap('user.followerCount', 'user.followers')
       .loadRelationCountAndMap('user.commentCount', 'user.comments', 'comment', qb => {
         return qb.andWhere('comment.deleted = false')
@@ -57,8 +55,6 @@ export class UserResolver extends RepositoryInjector {
     @Args() { username, page, pageSize }: UserCommentsArgs,
     @Ctx() { userId }: Context,
   ) {
-    console.log('---------------------------userComments---------------------------')
-
     const user = await this.userRepository.findOne({ username })
 
     if (!user) throw new Error('User not found')
@@ -96,8 +92,6 @@ export class UserResolver extends RepositoryInjector {
     @Args() { username, page, pageSize }: UserCommentsArgs,
     @Ctx() { userId }: Context,
   ) {
-    console.log('---------------------------userPosts---------------------------')
-
     const user = await this.userRepository.findOne({ username })
 
     if (!user) throw new Error('User not found')
@@ -138,8 +132,6 @@ export class UserResolver extends RepositoryInjector {
       throw new Error('Cannot follow yourself')
     }
 
-    console.log('---------------------------followUser---------------------------')
-
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'following')
@@ -159,8 +151,6 @@ export class UserResolver extends RepositoryInjector {
       throw new Error('Cannot unfollow yourself')
     }
 
-    console.log('---------------------------unfollowUser---------------------------')
-
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'following')
@@ -177,8 +167,6 @@ export class UserResolver extends RepositoryInjector {
       throw new Error('Cannot block yourself')
     }
 
-    console.log('---------------------------blockUser---------------------------')
-
     await this.userRepository
       .createQueryBuilder('user')
       .relation(User, 'blockedUsers')
@@ -194,8 +182,6 @@ export class UserResolver extends RepositoryInjector {
       throw new Error('Cannot unblock yourself')
     }
 
-    console.log('---------------------------unblockUser---------------------------')
-
     await this.userRepository
       .createQueryBuilder('user')
       .relation(User, 'blockedUsers')
@@ -207,8 +193,6 @@ export class UserResolver extends RepositoryInjector {
   @FieldResolver(returns => Boolean)
   async isFollowing(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
-
-    console.log('---------------------------isFollowing---------------------------')
 
     user = await this.userRepository
       .createQueryBuilder('user')
@@ -225,8 +209,6 @@ export class UserResolver extends RepositoryInjector {
   async isFollowed(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
 
-    console.log('---------------------------isFollowed---------------------------')
-
     user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: user.id })
@@ -242,8 +224,6 @@ export class UserResolver extends RepositoryInjector {
   async isBlocked(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
 
-    console.log('---------------------------isBlocked---------------------------')
-
     user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: user.id })
@@ -258,8 +238,6 @@ export class UserResolver extends RepositoryInjector {
   @FieldResolver(returns => Boolean)
   async isBlocking(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
-
-    console.log('---------------------------isBlocking---------------------------')
 
     user = await this.userRepository
       .createQueryBuilder('user')

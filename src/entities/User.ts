@@ -32,6 +32,12 @@ export class User {
   @Column({ default: false })
   admin: boolean
 
+  @Column({ default: false })
+  banned: boolean
+
+  @Column({ default: '' })
+  banReason: string
+
   @OneToMany(
     type => Comment,
     comment => comment.author,
@@ -118,6 +124,12 @@ export class User {
   @Field()
   @Column({ default: 0 })
   endorsementCount: number
+
+  @Column({ nullable: true })
+  lastPostedAt: Date
+
+  @Column({ nullable: true })
+  lastCommentedAt: Date
 
   @OneToMany(
     type => PostView,

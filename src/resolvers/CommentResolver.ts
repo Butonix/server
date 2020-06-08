@@ -20,6 +20,7 @@ import { PostView } from '../entities/PostView'
 import { PostCommentsArgs } from '../args/PostCommentsArgs'
 import { Sort, Time } from '../args/FeedArgs'
 import { User } from '../entities/User'
+import { differenceInSeconds } from 'date-fns'
 
 @Resolver(of => Comment)
 export class CommentResolver extends RepositoryInjector {
@@ -29,9 +30,17 @@ export class CommentResolver extends RepositoryInjector {
     @Args() { textContent, postId, parentCommentId }: SubmitCommentArgs,
     @Ctx() { userId }: Context,
   ) {
-    console.log('---------------------------submitComment---------------------------')
-
     if (!textContent) throw new Error('textContent cannot be empty')
+
+    const user = await this.userRepository.findOne(userId)
+
+    if (user.lastCommentedAt && !user.admin) {
+      if (differenceInSeconds(new Date(), user.lastCommentedAt) < 15) {
+        throw new Error('Please wait 15 seconds between comments')
+      }
+    }
+
+    this.userRepository.update(userId, { lastCommentedAt: new Date() })
 
     return this.commentRepository.save({
       id: shortid.generate(),
@@ -46,8 +55,6 @@ export class CommentResolver extends RepositoryInjector {
 
   @Query(returns => [Comment])
   async postComments(@Args() { postId, sort }: PostCommentsArgs, @Ctx() { userId }: Context) {
-    console.log('---------------------------postComments---------------------------')
-
     const post = await this.postRepository.findOne({ id: postId })
     if (!post) throw new Error('Invalid post ID')
 
@@ -98,8 +105,6 @@ export class CommentResolver extends RepositoryInjector {
     @Arg('commentId', type => ID) commentId: string,
     @Ctx() { userId }: Context,
   ) {
-    console.log('---------------------------toggleCommentEndorsement---------------------------')
-
     const comment = await this.commentRepository
       .createQueryBuilder('comment')
       .whereInIds(commentId)
