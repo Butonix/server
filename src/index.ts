@@ -22,7 +22,7 @@ import { Topic } from './entities/Topic'
 import { TopicResolver } from './resolvers/TopicResolver'
 import { CommentResolver } from './resolvers/CommentResolver'
 import { PostView } from './entities/PostView'
-import { Filter, Sort, Time } from './args/FeedArgs'
+import { Filter, Sort, Time, Type } from './args/FeedArgs'
 import { FiltersResolver } from './resolvers/FiltersResolver'
 
 // register 3rd party IOC container
@@ -81,6 +81,10 @@ async function bootstrap() {
 
     registerEnumType(Filter, {
       name: 'Filter',
+    })
+
+    registerEnumType(Type, {
+      name: 'Type',
     })
 
     // build TypeGraphQL executable schema

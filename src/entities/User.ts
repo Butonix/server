@@ -19,6 +19,9 @@ export class User {
   @Column()
   username: string
 
+  @Column({ nullable: true })
+  email: string
+
   @Field()
   @Column()
   createdAt: Date

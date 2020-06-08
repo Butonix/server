@@ -17,7 +17,7 @@ import { RepositoryInjector } from '../RepositoryInjector'
 import { Like } from 'typeorm'
 import { PaginationArgs } from '../args/PaginationArgs'
 import { Post } from '../entities/Post'
-import { FeedArgs, Filter, Sort, Time } from '../args/FeedArgs'
+import { FeedArgs, Filter, Sort, Time, Type } from '../args/FeedArgs'
 import { TopicFeedArgs } from '../args/TopicFeedArgs'
 
 @Resolver(of => Topic)
@@ -93,13 +93,19 @@ export class TopicResolver extends RepositoryInjector {
 
   @Query(returns => [Post])
   async topicFeed(
-    @Args() { page, pageSize, sort, time, topicName }: TopicFeedArgs,
+    @Args() { page, pageSize, sort, time, type, topicName }: TopicFeedArgs,
     @Ctx() { userId }: Context,
   ) {
     const qb = this.postRepository
       .createQueryBuilder('post')
       .andWhere('post.deleted = false')
       .andWhere(':topicName = ANY(post.topicsarr)', { topicName })
+
+    if (type === Type.TEXT) {
+      qb.andWhere("post.type = 'TEXT'")
+    } else if (type === Type.LINK) {
+      qb.andWhere("post.type = 'LINK'")
+    }
 
     if (sort === Sort.NEW) {
       qb.addOrderBy('post.createdAt', 'DESC')

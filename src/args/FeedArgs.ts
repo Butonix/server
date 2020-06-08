@@ -22,6 +22,12 @@ export enum Filter {
   FOLLOWING = 'following',
 }
 
+export enum Type {
+  TEXT = 'text',
+  LINK = 'link',
+  ALL = 'all',
+}
+
 @ArgsType()
 export class FeedArgs extends PaginationArgs {
   @Field(type => Sort, { defaultValue: Sort.HOT })
@@ -32,4 +38,7 @@ export class FeedArgs extends PaginationArgs {
 
   @Field(type => Filter, { defaultValue: Filter.ALL })
   filter: Filter = Filter.ALL
+
+  @Field(type => Type, { defaultValue: Type.ALL })
+  type: Type = Type.ALL
 }

@@ -26,7 +26,7 @@ import { getThumbnailUrl } from '../thumbnail'
 import { PostView } from '../entities/PostView'
 // @ts-ignore
 import getTitleAtUrl from 'get-title-at-url'
-import { FeedArgs, Filter, Sort, Time } from '../args/FeedArgs'
+import { FeedArgs, Filter, Sort, Time, Type } from '../args/FeedArgs'
 import AWS from 'aws-sdk'
 import axios from 'axios'
 import sharp from 'sharp'
@@ -156,13 +156,19 @@ export class PostResolver extends RepositoryInjector {
 
   @Query(returns => [Post])
   async homeFeed(
-    @Args() { page, pageSize, sort, time, filter }: FeedArgs,
+    @Args() { page, pageSize, sort, time, filter, type }: FeedArgs,
     @Ctx() { userId }: Context,
   ) {
     const qb = this.postRepository
       .createQueryBuilder('post')
       .andWhere('post.deleted = false')
       .andWhere('post.sticky = false')
+
+    if (type === Type.TEXT) {
+      qb.andWhere("post.type = 'TEXT'")
+    } else if (type === Type.LINK) {
+      qb.andWhere("post.type = 'LINK'")
+    }
 
     if (sort === Sort.NEW) {
       qb.addOrderBy('post.createdAt', 'DESC')
@@ -413,8 +419,8 @@ export class PostResolver extends RepositoryInjector {
     const user = await this.userRepository.findOne(userId)
 
     if (user.lastPostedAt && !user.admin) {
-      if (differenceInSeconds(new Date(), user.lastPostedAt) < 60 * 3) {
-        throw new Error('Please wait 3 minutes between posts')
+      if (differenceInSeconds(new Date(), user.lastPostedAt) < 60 * 2) {
+        throw new Error('Please wait 2 minutes between posts')
       }
     }
 
