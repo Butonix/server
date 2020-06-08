@@ -137,6 +137,16 @@ export class PostResolver extends RepositoryInjector {
 
       qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
 
+      const hiddenPosts = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'hiddenPosts')
+          .of(userId)
+          .loadMany()
+      ).map(post => post.id)
+
+      qb.andWhere('NOT (post.id = ANY(:hiddenPosts))', { hiddenPosts })
+
       qb.loadRelationCountAndMap(
         'post.personalEndorsementCount',
         'post.endorsements',
@@ -157,6 +167,44 @@ export class PostResolver extends RepositoryInjector {
       .getMany()
 
     posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
+
+    return posts
+  }
+
+  @Query(returns => [Post])
+  async hiddenPosts(@Ctx() { userId }: Context) {
+    if (!userId) return []
+
+    let posts = await this.userRepository
+      .createQueryBuilder()
+      .relation(User, 'hiddenPosts')
+      .of(userId)
+      .loadMany()
+
+    if (posts.length === 0) return []
+
+    const qb = this.postRepository
+      .createQueryBuilder('post')
+      .whereInIds(posts.map(post => post.id))
+      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+
+    qb.loadRelationCountAndMap(
+      'post.personalEndorsementCount',
+      'post.endorsements',
+      'endorsement',
+      qb => {
+        return qb
+          .andWhere('endorsement.active = true')
+          .andWhere('endorsement.userId = :userId', { userId })
+      },
+    )
+
+    posts = await qb.leftJoinAndSelect('post.topics', 'topic').getMany()
+
+    posts.forEach(post => {
+      post.isEndorsed = Boolean(post.personalEndorsementCount)
+      post.isHidden = true
+    })
 
     return posts
   }
@@ -404,6 +452,38 @@ export class PostResolver extends RepositoryInjector {
     )
 
     return active
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
+  async hidePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+    console.log('---------------------------hidePost---------------------------')
+
+    await this.userRepository
+      .createQueryBuilder()
+      .relation(User, 'hiddenPosts')
+      .of(userId)
+      .remove(postId)
+
+    await this.userRepository
+      .createQueryBuilder()
+      .relation(User, 'hiddenPosts')
+      .of(userId)
+      .add(postId)
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
+  async unhidePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+    console.log('---------------------------unhidePost---------------------------')
+
+    await this.userRepository
+      .createQueryBuilder()
+      .relation(User, 'hiddenPosts')
+      .of(userId)
+      .remove(postId)
+    return true
   }
 
   @FieldResolver()

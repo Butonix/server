@@ -168,6 +168,16 @@ export class TopicResolver extends RepositoryInjector {
 
       qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
 
+      const hiddenPosts = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'hiddenPosts')
+          .of(userId)
+          .loadMany()
+      ).map(post => post.id)
+
+      qb.andWhere('NOT (post.id = ANY(:hiddenPosts))', { hiddenPosts })
+
       qb.loadRelationCountAndMap(
         'post.personalEndorsementCount',
         'post.endorsements',

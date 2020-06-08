@@ -55,6 +55,10 @@ export class User {
   @JoinTable()
   hiddenTopics: Lazy<Topic[]>
 
+  @ManyToMany(type => Post)
+  @JoinTable()
+  hiddenPosts: Lazy<Post[]>
+
   @ManyToMany(
     type => User,
     user => user.following,

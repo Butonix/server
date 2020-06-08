@@ -17,6 +17,9 @@ import { Comment } from '../entities/Comment'
 import { SubmitCommentArgs } from '../args/SubmitCommentArgs'
 import shortid from 'shortid'
 import { PostView } from '../entities/PostView'
+import { PostCommentsArgs } from '../args/PostCommentsArgs'
+import { Sort, Time } from '../args/FeedArgs'
+import { User } from '../entities/User'
 
 @Resolver(of => Comment)
 export class CommentResolver extends RepositoryInjector {
@@ -42,7 +45,7 @@ export class CommentResolver extends RepositoryInjector {
   }
 
   @Query(returns => [Comment])
-  async postComments(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+  async postComments(@Args() { postId, sort }: PostCommentsArgs, @Ctx() { userId }: Context) {
     console.log('---------------------------postComments---------------------------')
 
     const post = await this.postRepository.findOne({ id: postId })
@@ -63,9 +66,25 @@ export class CommentResolver extends RepositoryInjector {
             .andWhere('endorsement.userId = :userId', { userId })
         },
       )
+
+      const blockedUsers = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'blockedUsers')
+          .of(userId)
+          .loadMany()
+      ).map(user => user.id)
+
+      qb.andWhere('NOT (comment.authorId = ANY(:blockedUsers))', { blockedUsers })
     }
 
-    const comments = await qb.addOrderBy('comment.createdAt', 'DESC').getMany()
+    if (sort === Sort.TOP) {
+      qb.addOrderBy('comment.endorsementCount', 'DESC')
+    }
+
+    qb.addOrderBy('comment.createdAt', 'DESC')
+
+    const comments = await qb.getMany()
 
     comments.forEach(comment => (comment.isEndorsed = Boolean(comment.personalEndorsementCount)))
 

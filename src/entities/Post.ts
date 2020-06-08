@@ -115,4 +115,7 @@ export class Post {
 
   @Field({ nullable: true })
   postView: PostView
+
+  @Field()
+  isHidden: boolean
 }
