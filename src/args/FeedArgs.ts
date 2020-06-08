@@ -5,6 +5,7 @@ export enum Sort {
   NEW = 'new',
   TOP = 'top',
   HOT = 'hot',
+  RELEVANCE = 'relevance',
 }
 
 export enum Time {

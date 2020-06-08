@@ -66,6 +66,7 @@ export class UserResolver extends RepositoryInjector {
     const qb = this.commentRepository
       .createQueryBuilder('comment')
       .where('comment.authorId = :id', { id: user.id })
+      .andWhere('comment.deleted = false')
       .addOrderBy('comment.createdAt', 'DESC')
       .skip(page * pageSize)
       .take(pageSize)

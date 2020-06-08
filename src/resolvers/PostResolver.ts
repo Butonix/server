@@ -31,6 +31,7 @@ import AWS from 'aws-sdk'
 import axios from 'axios'
 import sharp from 'sharp'
 import { User } from '../entities/User'
+import { SearchPostsArgs } from '../args/SearchPostsArgs'
 
 const s3 = new AWS.S3({
   credentials: {
@@ -46,6 +47,112 @@ export class PostResolver extends RepositoryInjector {
     return await new Promise(resolve => {
       getTitleAtUrl(url, (title: any) => resolve(title ? title : ''))
     })
+  }
+
+  @Query(returns => [Post])
+  async searchPosts(
+    @Args() { page, pageSize, search, sort, time }: SearchPostsArgs,
+    @Ctx() { userId }: Context,
+  ) {
+    console.log('---------------------------searchPosts---------------------------')
+
+    if (!search) return []
+
+    const qb = this.postRepository
+      .createQueryBuilder('post')
+      .addSelect('ts_rank_cd(to_tsvector(post.textContent), to_tsquery(:query))', 'textrank')
+      .addSelect('ts_rank_cd(to_tsvector(post.link), to_tsquery(:query))', 'linkrank')
+      .addSelect('ts_rank_cd(to_tsvector(post.title), to_tsquery(:query))', 'titlerank')
+      .orderBy('titlerank', 'DESC')
+      .addOrderBy('textrank', 'DESC')
+      .addOrderBy('linkrank', 'DESC')
+      .setParameter('query', search)
+      .andWhere('post.deleted = false')
+      .skip(page * pageSize)
+      .take(pageSize)
+
+    if (sort === Sort.TOP) {
+      switch (time) {
+        case Time.HOUR:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 hour'")
+          break
+        case Time.DAY:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 day'")
+          break
+        case Time.WEEK:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 week'")
+          break
+        case Time.MONTH:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 month'")
+          break
+        case Time.YEAR:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 year'")
+          break
+        case Time.ALL:
+          break
+        default:
+          break
+      }
+      qb.addOrderBy('post.endorsementCount', 'DESC')
+    }
+
+    qb.addOrderBy('post.createdAt', 'DESC')
+
+    if (userId) {
+      const hiddenTopics = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'hiddenTopics')
+          .of(userId)
+          .loadMany()
+      ).map(topic => topic.name)
+
+      if (hiddenTopics.length > 0) {
+        qb.andWhere(
+          'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0',
+        ).setParameter('hiddenTopics', hiddenTopics)
+      }
+
+      const blockedUsers = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'blockedUsers')
+          .of(userId)
+          .loadMany()
+      ).map(user => user.id)
+
+      qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
+
+      const hiddenPosts = (
+        await this.userRepository
+          .createQueryBuilder()
+          .relation(User, 'hiddenPosts')
+          .of(userId)
+          .loadMany()
+      ).map(post => post.id)
+
+      qb.andWhere('NOT (post.id = ANY(:hiddenPosts))', { hiddenPosts })
+
+      qb.loadRelationCountAndMap(
+        'post.personalEndorsementCount',
+        'post.endorsements',
+        'endorsement',
+        qb => {
+          return qb
+            .andWhere('endorsement.active = true')
+            .andWhere('endorsement.userId = :userId', { userId })
+        },
+      )
+    }
+
+    const posts = await qb
+      .leftJoinAndSelect('post.topics', 'topic')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .getMany()
+
+    posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
+
+    return posts
   }
 
   @Query(returns => [Post])
@@ -237,13 +344,14 @@ export class PostResolver extends RepositoryInjector {
     return posts
   }
 
-  @Query(returns => Post)
+  @Query(returns => Post, { nullable: true })
   async post(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
     console.log('---------------------------post---------------------------')
 
     const qb = this.postRepository
       .createQueryBuilder('post')
       .where('post.id = :postId', { postId })
+      .andWhere('post.deleted = false')
       .loadRelationCountAndMap('post.commentCount', 'post.comments')
 
     if (userId) {
@@ -261,7 +369,7 @@ export class PostResolver extends RepositoryInjector {
 
     const post = await qb.leftJoinAndSelect('post.topics', 'topic').getOne()
 
-    if (!post) throw new Error('Invalid post ID')
+    if (!post) return null
 
     post.isEndorsed = Boolean(post.personalEndorsementCount)
 
@@ -275,6 +383,8 @@ export class PostResolver extends RepositoryInjector {
     if (!userId) return null
 
     let postView = await this.postViewRepository.findOne({ postId, userId })
+
+    console.log(postView)
 
     const post = await this.postRepository
       .createQueryBuilder('post')

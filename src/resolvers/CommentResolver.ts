@@ -54,6 +54,7 @@ export class CommentResolver extends RepositoryInjector {
     const qb = await this.commentRepository
       .createQueryBuilder('comment')
       .where('comment.postId = :postId', { postId: post.id })
+      .andWhere('comment.deleted = false')
 
     if (userId) {
       qb.loadRelationCountAndMap(
