@@ -24,9 +24,17 @@ import { CommentResolver } from './resolvers/CommentResolver'
 import { PostView } from './entities/PostView'
 import { Filter, Sort, Time, Type } from './args/FeedArgs'
 import { FiltersResolver } from './resolvers/FiltersResolver'
+import aws from 'aws-sdk'
+import multer from 'multer'
+import { S3Storage } from './S3Storage'
 
 // register 3rd party IOC container
 TypeORM.useContainer(Container)
+
+aws.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY,
+  secretAccessKey: process.env.AWS_SECRET_KEY,
+})
 
 async function bootstrap() {
   const entities = [User, Comment, Post, PostEndorsement, CommentEndorsement, Topic, PostView]
@@ -100,14 +108,16 @@ async function bootstrap() {
 
     const app = express()
 
+    const origin =
+      process.env.STAGING === 'true'
+        ? 'https://comet-website-staging.herokuapp.com'
+        : process.env.NODE_ENV === 'production'
+        ? 'https://www.getcomet.net'
+        : 'http://localhost:3000'
+
     app.use(
       cors({
-        origin:
-          process.env.STAGING === 'true'
-            ? 'https://comet-website-staging.herokuapp.com'
-            : process.env.NODE_ENV === 'production'
-            ? 'https://getcomet.net'
-            : 'http://localhost:3000',
+        origin,
         credentials: true,
       }),
     )
@@ -134,14 +144,28 @@ async function bootstrap() {
     server.applyMiddleware({
       app,
       cors: {
-        origin:
-          process.env.STAGING === 'true'
-            ? 'https://comet-website-staging.herokuapp.com'
-            : process.env.NODE_ENV === 'production'
-            ? 'https://getcomet.net'
-            : 'http://localhost:3000',
+        origin,
         credentials: true,
       },
+    })
+
+    const upload = multer({
+      fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+          cb(null, true)
+        } else {
+          cb(new Error('Image must be JPEG or PNG'))
+        }
+      },
+      limits: {
+        fileSize: 4 * 1024 * 1024,
+      },
+      storage: new S3Storage(),
+    })
+
+    app.post('/upload', upload.single('image'), (req, res, next) => {
+      // @ts-ignore
+      return res.send({ link: req.file.location })
     })
 
     app.listen({ port: process.env.PORT || 4000 }, () => {

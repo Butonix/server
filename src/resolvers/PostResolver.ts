@@ -27,19 +27,12 @@ import { PostView } from '../entities/PostView'
 // @ts-ignore
 import getTitleAtUrl from 'get-title-at-url'
 import { FeedArgs, Filter, Sort, Time, Type } from '../args/FeedArgs'
-import AWS from 'aws-sdk'
 import axios from 'axios'
 import sharp from 'sharp'
 import { User } from '../entities/User'
 import { SearchPostsArgs } from '../args/SearchPostsArgs'
 import { differenceInSeconds } from 'date-fns'
-
-const s3 = new AWS.S3({
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-})
+import { s3 } from '../s3'
 
 @Resolver(of => Post)
 export class PostResolver extends RepositoryInjector {
@@ -474,7 +467,7 @@ export class PostResolver extends RepositoryInjector {
 
       s3UploadLink = await new Promise((resolve, reject) =>
         s3.upload(
-          { Bucket: 'comet-thumbs', Key: `${postId}.jpeg`, Body: resizedImage },
+          { Bucket: 'i.getcomet.net', Key: `${postId}.jpeg`, Body: resizedImage },
           (err, data) => {
             if (err) reject(err)
             else resolve(data.Location)
