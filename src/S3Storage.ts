@@ -5,6 +5,9 @@ import shortid from 'shortid'
 import sharp from 'sharp'
 import { s3 } from './s3'
 import { Stream } from 'stream'
+import { differenceInSeconds } from 'date-fns'
+import { getRepository } from 'typeorm'
+import { User } from './entities/User'
 
 export class S3Storage implements StorageEngine {
   async _handleFile(
@@ -16,6 +19,14 @@ export class S3Storage implements StorageEngine {
     if (!userId) {
       callback(new Error('Not Authenticated'))
       return
+    }
+
+    const user = await getRepository(User).findOne(userId)
+
+    if (user.lastPostedAt && !user.admin) {
+      if (differenceInSeconds(new Date(), user.lastPostedAt) < 60 * 2) {
+        callback(new Error('Please wait 2 minutes between posts'))
+      }
     }
 
     /*const transformer = sharp()

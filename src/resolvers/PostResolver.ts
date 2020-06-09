@@ -467,10 +467,15 @@ export class PostResolver extends RepositoryInjector {
 
       s3UploadLink = await new Promise((resolve, reject) =>
         s3.upload(
-          { Bucket: 'i.getcomet.net', Key: `${postId}.jpeg`, Body: resizedImage },
+          {
+            Bucket: 'i.getcomet.net',
+            Key: `thumbs/${postId}.jpg`,
+            Body: resizedImage,
+            ContentType: 'image/jpeg',
+          },
           (err, data) => {
             if (err) reject(err)
-            else resolve(data.Location)
+            else resolve(data.Location.replace('s3.amazonaws.com/', ''))
           },
         ),
       )
