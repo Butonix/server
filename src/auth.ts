@@ -1,6 +1,5 @@
 import { sign, verify } from 'jsonwebtoken'
 import { User } from './entities/User'
-import { getRepository } from 'typeorm'
 
 export const createAccessToken = (user: User) => {
   return sign({ userId: user.id }, process.env.ACCESS_TOKEN_SECRET!, {

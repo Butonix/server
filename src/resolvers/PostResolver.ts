@@ -33,6 +33,7 @@ import { User } from '../entities/User'
 import { SearchPostsArgs } from '../args/SearchPostsArgs'
 import { differenceInSeconds } from 'date-fns'
 import { s3 } from '../s3'
+import { discordReport } from '../DiscordBot'
 
 @Resolver(of => Post)
 export class PostResolver extends RepositoryInjector {
@@ -52,9 +53,9 @@ export class PostResolver extends RepositoryInjector {
 
     const qb = this.postRepository
       .createQueryBuilder('post')
-      .addSelect('ts_rank_cd(to_tsvector(post.textContent), to_tsquery(:query))', 'textrank')
-      .addSelect('ts_rank_cd(to_tsvector(post.link), to_tsquery(:query))', 'linkrank')
-      .addSelect('ts_rank_cd(to_tsvector(post.title), to_tsquery(:query))', 'titlerank')
+      .addSelect('ts_rank_cd(to_tsvector(post.textContent), plainto_tsquery(:query))', 'textrank')
+      .addSelect('ts_rank_cd(to_tsvector(post.link), plainto_tsquery(:query))', 'linkrank')
+      .addSelect('ts_rank_cd(to_tsvector(post.title), plainto_tsquery(:query))', 'titlerank')
       .orderBy('titlerank', 'DESC')
       .addOrderBy('textrank', 'DESC')
       .addOrderBy('linkrank', 'DESC')
@@ -590,6 +591,30 @@ export class PostResolver extends RepositoryInjector {
       .relation(User, 'hiddenPosts')
       .of(userId)
       .remove(postId)
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
+  async reportPost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+    const user = await this.userRepository.findOne(userId)
+
+    await this.postRepository
+      .createQueryBuilder()
+      .update()
+      .set({ reported: true })
+      .where('id = :postId', { postId })
+      .execute()
+
+    await discordReport(
+      user.username,
+      process.env.STAGING === 'true'
+        ? `https://comet-website-staging.herokuapp.com/post/${postId}`
+        : process.env.NODE_ENV === 'production'
+        ? `https://www.getcomet.net/post/${postId}`
+        : `http://localhost:3000/post/${postId}`,
+    )
+
     return true
   }
 
