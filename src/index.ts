@@ -109,11 +109,7 @@ async function bootstrap() {
     const app = express()
 
     const origin =
-      process.env.STAGING === 'true'
-        ? 'https://comet-website-staging.herokuapp.com'
-        : process.env.NODE_ENV === 'production'
-        ? 'https://www.getcomet.net'
-        : 'http://localhost:3000'
+      process.env.NODE_ENV === 'production' ? process.env.ORIGIN_URL : 'http://localhost:3000'
 
     app.use(
       cors({
@@ -163,10 +159,24 @@ async function bootstrap() {
       storage: new S3Storage(),
     })
 
-    app.post('/upload', upload.single('image'), (req, res, next) => {
-      // @ts-ignore
-      return res.send({ link: req.file.location })
-    })
+    const imageUpload = upload.single('image')
+
+    app.post(
+      '/upload',
+      (req: any, res: any, next: any) => {
+        imageUpload(req, res, (err: any): any => {
+          if (err) next(err)
+          else next()
+        })
+      },
+      (req: any, res: any, next: any) => {
+        // @ts-ignore
+        return res.send({ link: req.file.location })
+      },
+      (err: any, req: any, res: any, next: any) => {
+        res.send({ error: err.message })
+      },
+    )
 
     app.listen({ port: process.env.PORT || 4000 }, () => {
       console.log(`Server ready at http://localhost:4000${server.graphqlPath}`)

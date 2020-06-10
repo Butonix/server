@@ -142,13 +142,17 @@ export class TopicResolver extends RepositoryInjector {
     }
 
     if (userId) {
-      const hiddenTopics = (
-        await this.userRepository
-          .createQueryBuilder()
-          .relation(User, 'hiddenTopics')
-          .of(userId)
-          .loadMany()
-      ).map(topic => topic.name)
+      const user = await this.userRepository
+        .createQueryBuilder('user')
+        .whereInIds(userId)
+        .leftJoinAndSelect('user.hiddenTopics', 'hiddenTopics')
+        .leftJoinAndSelect('user.blockedUsers', 'blockedUsers')
+        .leftJoinAndSelect('user.hiddenPosts', 'hiddenPosts')
+        .getOne()
+
+      const hiddenTopics = (await user.hiddenTopics).map(topic => topic.name)
+      const blockedUsers = (await user.blockedUsers).map(user => user.id)
+      const hiddenPosts = (await user.hiddenPosts).map(post => post.id)
 
       if (hiddenTopics.length > 0) {
         qb.andWhere(
@@ -156,23 +160,7 @@ export class TopicResolver extends RepositoryInjector {
         ).setParameter('hiddenTopics', hiddenTopics)
       }
 
-      const blockedUsers = (
-        await this.userRepository
-          .createQueryBuilder()
-          .relation(User, 'blockedUsers')
-          .of(userId)
-          .loadMany()
-      ).map(user => user.id)
-
       qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
-
-      const hiddenPosts = (
-        await this.userRepository
-          .createQueryBuilder()
-          .relation(User, 'hiddenPosts')
-          .of(userId)
-          .loadMany()
-      ).map(post => post.id)
 
       qb.andWhere('NOT (post.id = ANY(:hiddenPosts))', { hiddenPosts })
 

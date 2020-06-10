@@ -132,6 +132,9 @@ export class User {
   lastPostedAt: Date
 
   @Column({ nullable: true })
+  lastUploadedImageAt: Date
+
+  @Column({ nullable: true })
   lastCommentedAt: Date
 
   @OneToMany(

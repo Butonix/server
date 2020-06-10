@@ -1,4 +1,4 @@
-import { Args, Ctx, Mutation, Resolver } from 'type-graphql'
+import { Arg, Args, Ctx, Mutation, Resolver, UseMiddleware } from 'type-graphql'
 import { LoginResponse } from '../responses/LoginResponse'
 import { LoginArgs } from '../args/LoginArgs'
 import { Context } from '../Context'
@@ -7,6 +7,7 @@ import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { createAccessToken } from '../auth'
 import * as argon2 from 'argon2'
+import { RequiresAuth } from '../RequiresAuth'
 
 @Resolver()
 export class AuthResolver {
@@ -49,6 +50,31 @@ export class AuthResolver {
     const match = await argon2.verify(user.passwordHash, password)
 
     if (!match) throw new Error('Invalid Login')
+
+    return {
+      accessToken: createAccessToken(user),
+      user,
+    } as LoginResponse
+  }
+
+  @Mutation(returns => LoginResponse)
+  @UseMiddleware(RequiresAuth)
+  async changePassword(
+    @Arg('oldPassword') oldPassword: string,
+    @Arg('newPassword') newPassword: string,
+    @Ctx() { userId }: Context,
+  ) {
+    const user = await this.userRepository.findOne(userId)
+    const match = await argon2.verify(user.passwordHash, oldPassword)
+
+    if (!match) throw new Error('Old password incorrect')
+
+    await this.userRepository
+      .createQueryBuilder()
+      .update()
+      .set({ passwordHash: await argon2.hash(newPassword) })
+      .where('id = :userId', { userId })
+      .execute()
 
     return {
       accessToken: createAccessToken(user),

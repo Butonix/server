@@ -15,6 +15,8 @@ export class S3Storage implements StorageEngine {
     file: any,
     callback: (error?: Error | null, info?: Partial<Express.Multer.File>) => void,
   ): Promise<void> {
+    console.log(file)
+
     const userId = getUser(req)
     if (!userId) {
       callback(new Error('Not Authenticated'))
@@ -23,11 +25,14 @@ export class S3Storage implements StorageEngine {
 
     const user = await getRepository(User).findOne(userId)
 
-    if (user.lastPostedAt && !user.admin) {
-      if (differenceInSeconds(new Date(), user.lastPostedAt) < 60 * 2) {
+    if (user.lastUploadedImageAt && !user.admin) {
+      if (differenceInSeconds(new Date(), user.lastUploadedImageAt) < 60 * 2) {
         callback(new Error('Please wait 2 minutes between posts'))
+        return
       }
     }
+
+    await getRepository(User).update(userId, { lastUploadedImageAt: new Date() })
 
     /*const transformer = sharp()
       .resize(2000, 2000, { fit: 'inside' })
@@ -48,7 +53,10 @@ export class S3Storage implements StorageEngine {
     })
 
     upload.send((err, result) => {
-      if (err) return callback(err)
+      if (err) {
+        callback(err)
+        return
+      }
 
       callback(null, {
         // @ts-ignore
