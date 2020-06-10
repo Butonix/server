@@ -26,7 +26,7 @@ export class TopicResolver extends RepositoryInjector {
   async topic(@Arg('topicName') topicName: string) {
     return this.topicRepository
       .createQueryBuilder('topic')
-      .andWhere('topic.name = :topicName', { topicName })
+      .andWhere('topic.name ILIKE :topicName', { topicName })
       .loadRelationCountAndMap('topic.postCount', 'topic.posts', 'post', qb => {
         return qb.andWhere('post.deleted = false')
       })

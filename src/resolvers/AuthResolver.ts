@@ -15,7 +15,7 @@ export class AuthResolver {
 
   @Mutation(returns => LoginResponse)
   async signUp(@Args() { username, password }: LoginArgs, @Ctx() { req, res }: Context) {
-    const foundUser = await this.userRepository.findOne({ username })
+    const foundUser = await this.userRepository.findOne({ where: `"username" ILIKE '${username}'` })
     if (foundUser) throw new Error('Username taken')
 
     const passwordHash = await argon2.hash(password)
@@ -35,7 +35,7 @@ export class AuthResolver {
 
   @Mutation(returns => LoginResponse)
   async login(@Args() { username, password }: LoginArgs, @Ctx() { req, res }: Context) {
-    const user = await this.userRepository.findOne({ username })
+    const user = await this.userRepository.findOne({ where: `"username" ILIKE '${username}'` })
     if (!user) throw new Error('Invalid Login')
 
     if (user.banned) throw new Error('Banned: ' + user.banReason)

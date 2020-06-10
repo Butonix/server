@@ -38,7 +38,7 @@ export class UserResolver extends RepositoryInjector {
   async user(@Arg('username') username: string) {
     return this.userRepository
       .createQueryBuilder('user')
-      .where('user.username = :username', { username })
+      .where('user.username ILIKE :username', { username })
       .andWhere('user.banned = false')
       .loadRelationCountAndMap('user.followerCount', 'user.followers')
       .loadRelationCountAndMap('user.commentCount', 'user.comments', 'comment', qb => {
