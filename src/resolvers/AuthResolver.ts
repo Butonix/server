@@ -67,7 +67,7 @@ export class AuthResolver {
     const user = await this.userRepository.findOne(userId)
     const match = await argon2.verify(user.passwordHash, oldPassword)
 
-    if (!match) throw new Error('Old password incorrect')
+    if (!match) throw new Error('Current password incorrect!')
 
     await this.userRepository
       .createQueryBuilder()
