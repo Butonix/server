@@ -56,7 +56,10 @@ export class UserResolver extends RepositoryInjector {
     @Args() { username, page, pageSize }: UserCommentsArgs,
     @Ctx() { userId }: Context,
   ) {
-    const user = await this.userRepository.findOne({ username })
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.username ILIKE :username', { username })
+      .getOne()
 
     if (!user) return []
 
@@ -93,7 +96,10 @@ export class UserResolver extends RepositoryInjector {
     @Args() { username, page, pageSize }: UserCommentsArgs,
     @Ctx() { userId }: Context,
   ) {
-    const user = await this.userRepository.findOne({ username })
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.username ILIKE :username', { username })
+      .getOne()
 
     if (!user) return []
 

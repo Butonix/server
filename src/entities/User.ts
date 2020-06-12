@@ -137,6 +137,10 @@ export class User {
   @Column({ nullable: true })
   lastCommentedAt: Date
 
+  @Field()
+  @Column({ default: '' })
+  title: string
+
   @OneToMany(
     type => PostView,
     postView => postView.user,

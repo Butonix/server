@@ -249,7 +249,9 @@ export class PostResolver extends RepositoryInjector {
       .skip(page * pageSize)
       .take(pageSize)
       .leftJoinAndSelect('post.topics', 'topic')
-      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
+        return qb.andWhere('comment.deleted = false')
+      })
       .getMany()
 
     posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
@@ -484,8 +486,9 @@ export class PostResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async deletePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
-    const post = await this.postRepository.findOne({ id: postId })
-    if (post.authorId !== userId)
+    const post = await this.postRepository.findOne(postId)
+    const user = await this.userRepository.findOne(userId)
+    if (post.authorId !== userId && !user.admin)
       throw new Error('Attempt to delete post by someone other than author')
 
     await this.postRepository

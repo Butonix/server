@@ -132,6 +132,24 @@ export class CommentResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
+  async deleteComment(@Arg('commentId', type => ID) commentId: string, @Ctx() { userId }: Context) {
+    const comment = await this.commentRepository.findOne(commentId)
+    const user = await this.userRepository.findOne(userId)
+    if (comment.authorId !== userId && !user.admin)
+      throw new Error('Attempt to delete post by someone other than author')
+
+    await this.commentRepository
+      .createQueryBuilder()
+      .update()
+      .set({ deleted: true })
+      .where('id = :commentId', { commentId })
+      .execute()
+
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
   async toggleCommentEndorsement(
     @Arg('commentId', type => ID) commentId: string,
     @Ctx() { userId }: Context,
