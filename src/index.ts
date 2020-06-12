@@ -27,6 +27,8 @@ import { FiltersResolver } from './resolvers/FiltersResolver'
 import aws from 'aws-sdk'
 import multer from 'multer'
 import { S3Storage } from './S3Storage'
+import { ReplyNotification } from './entities/ReplyNotification'
+import { NotificationResolver } from './resolvers/NotificationResolver'
 
 // register 3rd party IOC container
 TypeORM.useContainer(Container)
@@ -37,7 +39,16 @@ aws.config.update({
 })
 
 async function bootstrap() {
-  const entities = [User, Comment, Post, PostEndorsement, CommentEndorsement, Topic, PostView]
+  const entities = [
+    User,
+    Comment,
+    Post,
+    PostEndorsement,
+    CommentEndorsement,
+    Topic,
+    PostView,
+    ReplyNotification,
+  ]
   const resolvers = [
     PostResolver,
     UserResolver,
@@ -45,6 +56,7 @@ async function bootstrap() {
     TopicResolver,
     CommentResolver,
     FiltersResolver,
+    NotificationResolver,
   ]
 
   try {

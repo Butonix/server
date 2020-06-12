@@ -359,8 +359,6 @@ export class PostResolver extends RepositoryInjector {
 
     let postView = await this.postViewRepository.findOne({ postId, userId })
 
-    console.log(postView)
-
     const post = await this.postRepository
       .createQueryBuilder('post')
       .andWhereInIds(postId)

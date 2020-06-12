@@ -18,6 +18,7 @@ import { Comment } from '../entities/Comment'
 import { UserCommentsArgs } from '../args/UserCommentsArgs'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Post } from '../entities/Post'
+import { ReplyNotification } from '../entities/ReplyNotification'
 
 @Resolver(of => User)
 export class UserResolver extends RepositoryInjector {
@@ -100,6 +101,7 @@ export class UserResolver extends RepositoryInjector {
       .createQueryBuilder('post')
       .where('post.authorId = :id', { id: user.id })
       .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .leftJoinAndSelect('post.topics', 'topic')
       .addOrderBy('post.createdAt', 'DESC')
       .andWhere('post.deleted = false')
       .skip(page * pageSize)

@@ -7,6 +7,7 @@ import { PostEndorsement } from './entities/PostEndorsement'
 import { CommentEndorsement } from './entities/CommentEndorsement'
 import { Topic } from './entities/Topic'
 import { PostView } from './entities/PostView'
+import { ReplyNotification } from './entities/ReplyNotification'
 
 export class RepositoryInjector {
   @InjectRepository(Comment) readonly commentRepository: TreeRepository<Comment>
@@ -18,4 +19,5 @@ export class RepositoryInjector {
   >
   @InjectRepository(Topic) readonly topicRepository: Repository<Topic>
   @InjectRepository(PostView) readonly postViewRepository: Repository<PostView>
+  @InjectRepository(ReplyNotification) readonly replyNotifRepository: Repository<ReplyNotification>
 }

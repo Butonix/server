@@ -21,6 +21,7 @@ import { PostCommentsArgs } from '../args/PostCommentsArgs'
 import { Sort, Time } from '../args/FeedArgs'
 import { User } from '../entities/User'
 import { differenceInSeconds } from 'date-fns'
+import { ReplyNotification } from '../entities/ReplyNotification'
 
 @Resolver(of => Comment)
 export class CommentResolver extends RepositoryInjector {
@@ -42,8 +43,10 @@ export class CommentResolver extends RepositoryInjector {
 
     this.userRepository.update(userId, { lastCommentedAt: new Date() })
 
-    return this.commentRepository.save({
-      id: shortid.generate(),
+    const commentId = shortid.generate()
+
+    const savedComment = await this.commentRepository.save({
+      id: commentId,
       textContent,
       parentCommentId,
       postId,
@@ -51,6 +54,33 @@ export class CommentResolver extends RepositoryInjector {
       createdAt: new Date(),
       isEndorsed: false,
     } as Comment)
+
+    if (parentCommentId) {
+      const parentComment = await this.commentRepository.findOne(parentCommentId)
+      if (parentComment.authorId !== userId) {
+        this.replyNotifRepository.save({
+          commentId,
+          fromUserId: userId,
+          toUserId: parentComment.authorId,
+          postId,
+          createdAt: new Date(),
+          parentCommentId,
+        } as ReplyNotification)
+      }
+    } else {
+      const post = await this.postRepository.findOne(postId)
+      if (post.authorId !== userId) {
+        this.replyNotifRepository.save({
+          commentId,
+          fromUserId: userId,
+          toUserId: post.authorId,
+          postId,
+          createdAt: new Date(),
+        } as ReplyNotification)
+      }
+    }
+
+    return savedComment
   }
 
   @Query(returns => [Comment])

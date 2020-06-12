@@ -15,8 +15,6 @@ export class S3Storage implements StorageEngine {
     file: any,
     callback: (error?: Error | null, info?: Partial<Express.Multer.File>) => void,
   ): Promise<void> {
-    console.log(file)
-
     const userId = getUser(req)
     if (!userId) {
       callback(new Error('Not Authenticated'))
