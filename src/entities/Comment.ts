@@ -59,6 +59,14 @@ export class Comment {
   @Column()
   createdAt: Date
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  editedAt: Date
+
+  @Field(type => [String])
+  @Column('text', { array: true, default: '{}' })
+  editHistory: string[]
+
   @Field(type => Comment, { nullable: true })
   @TreeParent()
   parentComment: Lazy<Comment>

@@ -53,6 +53,14 @@ export class Post {
   @Column()
   createdAt: Date
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  editedAt: Date
+
+  @Field(type => [String])
+  @Column('text', { array: true, default: '{}' })
+  editHistory: string[]
+
   @Column({ default: false })
   sticky: boolean
 

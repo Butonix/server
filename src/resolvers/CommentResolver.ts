@@ -150,6 +150,33 @@ export class CommentResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
+  async editComment(
+    @Arg('commentId', type => ID) commentId: string,
+    @Arg('newTextContent') newTextContent: string,
+    @Ctx() { userId }: Context,
+  ) {
+    if (newTextContent.length === 0) throw new Error('newTextContent cannot be empty')
+
+    const comment = await this.commentRepository.findOne(commentId)
+    const user = await this.userRepository.findOne(userId)
+    if (comment.authorId !== userId && !user.admin)
+      throw new Error('Attempt to edit post by someone other than author')
+
+    const editHistory = comment.editHistory
+    editHistory.unshift(comment.textContent)
+
+    await this.commentRepository
+      .createQueryBuilder()
+      .update()
+      .set({ editedAt: new Date(), textContent: newTextContent, editHistory })
+      .where('id = :commentId', { commentId })
+      .execute()
+
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
   async toggleCommentEndorsement(
     @Arg('commentId', type => ID) commentId: string,
     @Ctx() { userId }: Context,

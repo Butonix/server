@@ -485,6 +485,33 @@ export class PostResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
+  async editPost(
+    @Arg('postId', type => ID) postId: string,
+    @Arg('newTextContent') newTextContent: string,
+    @Ctx() { userId }: Context,
+  ) {
+    if (newTextContent.length === 0) throw new Error('newTextContent cannot be empty')
+
+    const post = await this.postRepository.findOne(postId)
+    const user = await this.userRepository.findOne(userId)
+    if (post.authorId !== userId && !user.admin)
+      throw new Error('Attempt to edit post by someone other than author')
+
+    const editHistory = post.editHistory
+    editHistory.unshift(post.textContent)
+
+    await this.postRepository
+      .createQueryBuilder()
+      .update()
+      .set({ editedAt: new Date(), textContent: newTextContent, editHistory })
+      .where('id = :postId', { postId })
+      .execute()
+
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
   async deletePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
     const post = await this.postRepository.findOne(postId)
     const user = await this.userRepository.findOne(userId)
