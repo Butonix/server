@@ -99,7 +99,7 @@ export class TopicResolver extends RepositoryInjector {
     const qb = this.postRepository
       .createQueryBuilder('post')
       .andWhere('post.deleted = false')
-      .andWhere(':topicName = ANY(post.topicsarr)', { topicName })
+      .andWhere(':topicName ILIKE ANY(post.topicsarr)', { topicName })
 
     if (type === Type.TEXT) {
       qb.andWhere("post.type = 'TEXT'")
