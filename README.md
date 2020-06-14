@@ -1,3 +1,3 @@
 # Comet Server
 
-Run dev server: npm run dev
+Run dev server: `npm run dev`
