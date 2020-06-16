@@ -46,6 +46,7 @@ export class TopicResolver extends RepositoryInjector {
       )
       .groupBy('topic.name')
       .orderBy('topic_total', 'DESC')
+      .having('COUNT(posts.id) > 0')
       .take(10)
       .getMany()
 
