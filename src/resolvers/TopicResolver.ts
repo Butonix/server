@@ -181,7 +181,9 @@ export class TopicResolver extends RepositoryInjector {
       .skip(page * pageSize)
       .take(pageSize)
       .leftJoinAndSelect('post.topics', 'topic')
-      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
+        return qb.andWhere('comment.deleted = false')
+      })
       .getMany()
 
     posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))

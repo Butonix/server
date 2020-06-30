@@ -140,7 +140,9 @@ export class PostResolver extends RepositoryInjector {
 
     const posts = await qb
       .leftJoinAndSelect('post.topics', 'topic')
-      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
+        return qb.andWhere('comment.deleted = false')
+      })
       .getMany()
 
     posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
@@ -150,7 +152,7 @@ export class PostResolver extends RepositoryInjector {
 
   @Query(returns => [Post])
   async homeFeed(
-    @Args() { page, pageSize, sort, time, filter, type }: FeedArgs,
+    @Args() { page, pageSize, sort, time, filter, types }: FeedArgs,
     @Ctx() { userId }: Context,
   ) {
     const qb = this.postRepository
@@ -158,10 +160,12 @@ export class PostResolver extends RepositoryInjector {
       .andWhere('post.deleted = false')
       .andWhere('post.sticky = false')
 
-    if (type === Type.TEXT) {
-      qb.andWhere("post.type = 'TEXT'")
-    } else if (type === Type.LINK) {
-      qb.andWhere("post.type = 'LINK'")
+    if (types.length === 1) {
+      qb.andWhere(`post.type = '${types[0].toUpperCase()}'`)
+    } else if (types.length === 2) {
+      qb.andWhere(
+        `post.type = '${types[0].toUpperCase()}' OR post.type = '${types[1].toUpperCase()}'`,
+      )
     }
 
     if (sort === Sort.NEW) {
@@ -213,7 +217,7 @@ export class PostResolver extends RepositoryInjector {
       const blockedUsers = (await user.blockedUsers).map(user => user.id)
       const hiddenPosts = (await user.hiddenPosts).map(post => post.id)
 
-      if (filter === Filter.FOLLOWING) {
+      if (filter === Filter.MYTOPICS) {
         if (followedTopics.length > 0) {
           qb.andWhere(
             'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:followedTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) > 0',
@@ -274,7 +278,9 @@ export class PostResolver extends RepositoryInjector {
     const qb = this.postRepository
       .createQueryBuilder('post')
       .whereInIds(posts.map(post => post.id))
-      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
+        return qb.andWhere('comment.deleted = false')
+      })
 
     qb.loadRelationCountAndMap(
       'post.personalEndorsementCount',
@@ -303,7 +309,9 @@ export class PostResolver extends RepositoryInjector {
       .createQueryBuilder('post')
       .andWhere('post.sticky = TRUE')
       .leftJoinAndSelect('post.topics', 'topic')
-      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
+        return qb.andWhere('comment.deleted = false')
+      })
 
     if (userId) {
       qb.loadRelationCountAndMap(
@@ -331,7 +339,9 @@ export class PostResolver extends RepositoryInjector {
       .createQueryBuilder('post')
       .where('post.id = :postId', { postId })
       .andWhere('post.deleted = false')
-      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
+        return qb.andWhere('comment.deleted = false')
+      })
 
     if (userId) {
       qb.loadRelationCountAndMap(
@@ -364,7 +374,9 @@ export class PostResolver extends RepositoryInjector {
     const post = await this.postRepository
       .createQueryBuilder('post')
       .andWhereInIds(postId)
-      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
+        return qb.andWhere('comment.deleted = false')
+      })
       .getOne()
 
     if (!post) throw new Error('Invalid post id')

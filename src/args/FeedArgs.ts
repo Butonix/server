@@ -19,13 +19,13 @@ export enum Time {
 
 export enum Filter {
   ALL = 'all',
-  FOLLOWING = 'following',
+  MYTOPICS = 'mytopics',
 }
 
 export enum Type {
   TEXT = 'text',
-  LINK = 'link',
-  ALL = 'all',
+  LINKS = 'links',
+  IMAGES = 'images',
 }
 
 @ArgsType()
@@ -39,6 +39,6 @@ export class FeedArgs extends PaginationArgs {
   @Field(type => Filter, { defaultValue: Filter.ALL })
   filter: Filter = Filter.ALL
 
-  @Field(type => Type, { defaultValue: Type.ALL })
-  type: Type = Type.ALL
+  @Field(type => [Type], { defaultValue: [] })
+  types: Type[]
 }
