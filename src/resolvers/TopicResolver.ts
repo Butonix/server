@@ -94,7 +94,7 @@ export class TopicResolver extends RepositoryInjector {
 
   @Query(returns => [Post])
   async topicFeed(
-    @Args() { page, pageSize, sort, time, type, topicName }: TopicFeedArgs,
+    @Args() { page, pageSize, sort, time, types, topicName }: TopicFeedArgs,
     @Ctx() { userId }: Context,
   ) {
     const qb = this.postRepository
@@ -102,10 +102,12 @@ export class TopicResolver extends RepositoryInjector {
       .andWhere('post.deleted = false')
       .andWhere(':topicName ILIKE ANY(post.topicsarr)', { topicName })
 
-    if (type === Type.TEXT) {
-      qb.andWhere("post.type = 'TEXT'")
-    } else if (type === Type.LINK) {
-      qb.andWhere("post.type = 'LINK'")
+    if (types.length === 1) {
+      qb.andWhere(`post.type = '${types[0].toUpperCase()}'`)
+    } else if (types.length === 2) {
+      qb.andWhere(
+        `post.type = '${types[0].toUpperCase()}' OR post.type = '${types[1].toUpperCase()}'`,
+      )
     }
 
     if (sort === Sort.NEW) {
