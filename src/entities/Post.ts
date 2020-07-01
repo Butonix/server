@@ -10,6 +10,7 @@ import { PostView } from './PostView'
 export enum PostType {
   TEXT = 'TEXT',
   LINK = 'LINK',
+  IMAGE = 'IMAGE',
 }
 
 @ObjectType()

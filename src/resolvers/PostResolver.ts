@@ -25,8 +25,7 @@ import { Topic } from '../entities/Topic'
 import { getThumbnailUrl } from '../thumbnail'
 import { PostView } from '../entities/PostView'
 // @ts-ignore
-import getTitleAtUrl from 'get-title-at-url'
-import { FeedArgs, Filter, Sort, Time, Type } from '../args/FeedArgs'
+import { FeedArgs, Filter, Sort, Time } from '../args/FeedArgs'
 import axios from 'axios'
 import sharp from 'sharp'
 import { User } from '../entities/User'
@@ -34,14 +33,34 @@ import { SearchPostsArgs } from '../args/SearchPostsArgs'
 import { differenceInSeconds } from 'date-fns'
 import { s3 } from '../s3'
 import { discordReport } from '../DiscordBot'
+import cheerio from 'cheerio'
+import request from 'request'
 
 @Resolver(of => Post)
 export class PostResolver extends RepositoryInjector {
   @Query(returns => String)
   async getTitleAtUrl(@Arg('url') url: string) {
-    return await new Promise(resolve => {
-      getTitleAtUrl(url, (title: any) => resolve(title ? title : ''))
-    })
+    let result = ''
+    try {
+      result = await new Promise((resolve, reject) =>
+        request(url, function(error, response, body) {
+          let output = url // default to URL
+          if (!error && response.statusCode === 200) {
+            const $ = cheerio.load(body)
+            output = $('head > title')
+              .text()
+              .trim()
+            resolve(output)
+          } else {
+            reject(error)
+          }
+        }),
+      )
+    } catch (e) {
+      result = ''
+    }
+
+    return result
   }
 
   @Query(returns => [Post])
@@ -416,12 +435,13 @@ export class PostResolver extends RepositoryInjector {
 
     const url = new Url(link)
     let parseResult: any = null
-    if (type === PostType.LINK) {
+    if (type === PostType.LINK || type === PostType.IMAGE) {
       if (isImageUrl(link)) {
         parseResult = {
           // eslint-disable-next-line @typescript-eslint/camelcase
           lead_image_url: link,
         }
+        type = PostType.IMAGE
       } else {
         const longTask = () =>
           new Promise(async resolve => {
@@ -452,11 +472,15 @@ export class PostResolver extends RepositoryInjector {
     const postId = shortid.generate()
     let s3UploadLink = ''
 
-    if (type === PostType.LINK && parseResult && parseResult.lead_image_url) {
+    if (
+      (type === PostType.LINK || type === PostType.IMAGE) &&
+      parseResult &&
+      parseResult.lead_image_url
+    ) {
       const response = await axios.get(parseResult.lead_image_url, { responseType: 'arraybuffer' })
       const isYoutube = parseResult.lead_image_url.includes('ytimg.com')
       const resizedImage = await sharp(response.data)
-        .resize(isYoutube ? 128 : 72, 72)
+        .resize(isYoutube ? 144 : 80, 80, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
         .jpeg()
         .toBuffer()
 

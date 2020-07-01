@@ -24,8 +24,8 @@ export enum Filter {
 
 export enum Type {
   TEXT = 'text',
-  LINKS = 'links',
-  IMAGES = 'images',
+  LINK = 'link',
+  IMAGE = 'image',
 }
 
 @ArgsType()
