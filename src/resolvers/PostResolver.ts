@@ -4,6 +4,7 @@ import {
   Ctx,
   FieldResolver,
   ID,
+  Int,
   Mutation,
   Query,
   Resolver,
@@ -35,6 +36,9 @@ import { s3 } from '../s3'
 import { discordReport } from '../DiscordBot'
 import cheerio from 'cheerio'
 import request from 'request'
+import { Comment } from '../entities/Comment'
+import * as faker from 'faker'
+import * as argon2 from 'argon2'
 
 @Resolver(of => Post)
 export class PostResolver extends RepositoryInjector {

@@ -29,6 +29,8 @@ import multer from 'multer'
 import { S3Storage } from './S3Storage'
 import { ReplyNotification } from './entities/ReplyNotification'
 import { NotificationResolver } from './resolvers/NotificationResolver'
+import { FakeDataGenerator } from './generateFakeData'
+import { getRepository, getTreeRepository } from 'typeorm'
 
 // register 3rd party IOC container
 TypeORM.useContainer(Container)
@@ -37,6 +39,15 @@ aws.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY,
   secretAccessKey: process.env.AWS_SECRET_KEY,
 })
+
+let generateFakeData = false
+if (process.env.STAGING === 'true') {
+  generateFakeData = true
+} else if (process.env.NODE_ENV === 'production' && !process.env.STAGING) {
+  generateFakeData = false
+} else if (process.env.NODE_ENV !== 'production') {
+  generateFakeData = false
+}
 
 async function bootstrap() {
   const entities = [
@@ -60,18 +71,8 @@ async function bootstrap() {
   ]
 
   try {
-    if (process.env.NODE_ENV === 'production') {
-      await TypeORM.createConnection({
-        type: 'postgres',
-        url: process.env.DATABASE_URL,
-        entities,
-        synchronize: true,
-        logging: false,
-        dropSchema: false, // CLEARS DATABASE ON START
-        cache: true,
-      })
-    } else {
-      // DEVELOPMENT
+    if (process.env.NODE_ENV !== 'production') {
+      // DEV
       await TypeORM.createConnection({
         type: 'postgres',
         host: 'localhost',
@@ -82,10 +83,31 @@ async function bootstrap() {
         entities,
         synchronize: true,
         logging: true,
-        dropSchema: false, // CLEARS DATABASE ON START
+        dropSchema: generateFakeData, // CLEARS DATABASE ON START
         cache: true,
       })
-    }
+    } else if (process.env.NODE_ENV === 'production' && !process.env.STAGING) {
+      // PROD
+      await TypeORM.createConnection({
+        type: 'postgres',
+        url: process.env.DATABASE_URL,
+        entities,
+        synchronize: true,
+        logging: false,
+        cache: true,
+      })
+    } else if (process.env.NODE_ENV === 'production' && process.env.STAGING === 'true') {
+      // STAGING
+      await TypeORM.createConnection({
+        type: 'postgres',
+        url: process.env.DATABASE_URL,
+        entities,
+        synchronize: true,
+        logging: false,
+        dropSchema: true, // CLEARS DATABASE ON START
+        cache: true,
+      })
+    } else return
 
     registerEnumType(PostType, {
       name: 'PostType',
@@ -192,6 +214,19 @@ async function bootstrap() {
     app.listen({ port: process.env.PORT || 4000 }, () => {
       console.log(`Server ready at http://localhost:4000${server.graphqlPath}`)
     })
+
+    if (
+      (process.env.NODE_ENV !== 'production' || process.env.STAGING === 'true') &&
+      generateFakeData
+    ) {
+      await new FakeDataGenerator().generateFakeData(
+        1000,
+        getRepository(User),
+        getRepository(Post),
+        getRepository(Topic),
+        getTreeRepository(Comment),
+      )
+    }
   } catch (e) {
     console.error(e)
   }

@@ -26,7 +26,7 @@ export class User {
   @Column()
   createdAt: Date
 
-  @Column()
+  @Column({ nullable: true })
   lastLogin: Date
 
   @Column()
@@ -38,7 +38,7 @@ export class User {
   @Column({ default: false })
   banned: boolean
 
-  @Column({ default: '' })
+  @Column({ nullable: true })
   banReason: string
 
   @OneToMany(
@@ -137,8 +137,8 @@ export class User {
   @Column({ nullable: true })
   lastCommentedAt: Date
 
-  @Field()
-  @Column({ default: '' })
+  @Field({ nullable: true })
+  @Column({ nullable: true })
   title: string
 
   @OneToMany(
