@@ -42,11 +42,14 @@ aws.config.update({
 
 let generateFakeData = false
 if (process.env.STAGING === 'true') {
+  // STAGING
   generateFakeData = true
 } else if (process.env.NODE_ENV === 'production' && !process.env.STAGING) {
+  // PROD
   generateFakeData = false
 } else if (process.env.NODE_ENV !== 'production') {
-  generateFakeData = false
+  // DEV
+  generateFakeData = false // edit this for dev
 }
 
 async function bootstrap() {

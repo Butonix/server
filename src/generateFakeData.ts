@@ -49,7 +49,7 @@ export class FakeDataGenerator {
           link = faker.image.imageUrl()
         }
         if (link) {
-          thumbnailUrl = faker.image.imageUrl(80, 80)
+          thumbnailUrl = 'https://i.getcomet.net/thumbs/YJT7aBjRk.jpg'
           domain = new Url(link).hostname
         }
 
