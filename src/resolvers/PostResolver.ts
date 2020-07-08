@@ -235,43 +235,43 @@ export class PostResolver extends RepositoryInjector {
         .leftJoinAndSelect('user.hiddenPosts', 'hiddenPosts')
         .getOne()
 
-      if (!user) throw new Error('User login invalid')
+      if (user) {
+        const hiddenTopics = (await user.hiddenTopics).map(topic => topic.name)
+        const followedTopics = (await user.followedTopics).map(topic => topic.name)
+        const blockedUsers = (await user.blockedUsers).map(user => user.id)
+        const hiddenPosts = (await user.hiddenPosts).map(post => post.id)
 
-      const hiddenTopics = (await user.hiddenTopics).map(topic => topic.name)
-      const followedTopics = (await user.followedTopics).map(topic => topic.name)
-      const blockedUsers = (await user.blockedUsers).map(user => user.id)
-      const hiddenPosts = (await user.hiddenPosts).map(post => post.id)
-
-      if (filter === Filter.MYTOPICS) {
-        if (followedTopics.length > 0) {
-          qb.andWhere(
-            'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:followedTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) > 0',
-          ).setParameter('followedTopics', followedTopics)
-        } else {
-          return []
+        if (filter === Filter.MYTOPICS) {
+          if (followedTopics.length > 0) {
+            qb.andWhere(
+              'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:followedTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) > 0',
+            ).setParameter('followedTopics', followedTopics)
+          } else {
+            return []
+          }
         }
+
+        if (hiddenTopics.length > 0) {
+          qb.andWhere(
+            'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0',
+          ).setParameter('hiddenTopics', hiddenTopics)
+        }
+
+        qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
+
+        qb.andWhere('NOT (post.id = ANY(:hiddenPosts))', { hiddenPosts })
+
+        qb.loadRelationCountAndMap(
+          'post.personalEndorsementCount',
+          'post.endorsements',
+          'endorsement',
+          qb => {
+            return qb
+              .andWhere('endorsement.active = true')
+              .andWhere('endorsement.userId = :userId', { userId })
+          },
+        )
       }
-
-      if (hiddenTopics.length > 0) {
-        qb.andWhere(
-          'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0',
-        ).setParameter('hiddenTopics', hiddenTopics)
-      }
-
-      qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
-
-      qb.andWhere('NOT (post.id = ANY(:hiddenPosts))', { hiddenPosts })
-
-      qb.loadRelationCountAndMap(
-        'post.personalEndorsementCount',
-        'post.endorsements',
-        'endorsement',
-        qb => {
-          return qb
-            .andWhere('endorsement.active = true')
-            .andWhere('endorsement.userId = :userId', { userId })
-        },
-      )
     }
 
     const posts = await qb
@@ -486,7 +486,7 @@ export class PostResolver extends RepositoryInjector {
       const response = await axios.get(parseResult.lead_image_url, { responseType: 'arraybuffer' })
       const isYoutube = parseResult.lead_image_url.includes('ytimg.com')
       const resizedImage = await sharp(response.data)
-        .resize(isYoutube ? 144 : 80, 80, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .resize(isYoutube ? 128 : 72, 72, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
         .jpeg()
         .toBuffer()
 

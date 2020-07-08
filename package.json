@@ -10,6 +10,7 @@
     "ts-node-dev": "ts-node-dev",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --no-notify src/index.ts",
+    "reddit-dev": "ts-node-dev --respawn --no-notify src/redditReposter.ts",
     "heroku-postbuild": "tsc",
     "lint:list": "eslint */**/*.ts --fix",
     "lint": "eslint */**/*.ts --fix"

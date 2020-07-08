@@ -96,7 +96,6 @@ export class FakeDataGenerator {
       await topicRepository.save(topicsToSave)
       await postRepository.save(postsToSave)
       await commentRepository.save(commentsToSave)
-      return true
     } else
       throw new Error('generateFakeData can only be used in development and staging environments.')
   }

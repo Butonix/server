@@ -212,6 +212,8 @@ export class UserResolver extends RepositoryInjector {
       })
       .getOne()
 
+    if (!user) return false
+
     return Boolean((await user.following).length)
   }
 
@@ -226,6 +228,8 @@ export class UserResolver extends RepositoryInjector {
         targetId: userId,
       })
       .getOne()
+
+    if (!user) return false
 
     return Boolean((await user.following).length)
   }
@@ -242,6 +246,8 @@ export class UserResolver extends RepositoryInjector {
       })
       .getOne()
 
+    if (!user) return false
+
     return Boolean((await user.blockedUsers).length)
   }
 
@@ -256,6 +262,8 @@ export class UserResolver extends RepositoryInjector {
         targetId: user.id,
       })
       .getOne()
+
+    if (!user) return false
 
     return Boolean((await user.blockedUsers).length)
   }
