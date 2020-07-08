@@ -20,14 +20,22 @@ export class User {
   username: string
 
   @Column({ nullable: true })
-  email: string
+  email?: string
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  bio?: string
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  profilePicUrl?: string
 
   @Field()
   @Column()
   createdAt: Date
 
   @Column({ nullable: true })
-  lastLogin: Date
+  lastLogin?: Date
 
   @Column()
   passwordHash: string
@@ -39,7 +47,7 @@ export class User {
   banned: boolean
 
   @Column({ nullable: true })
-  banReason: string
+  banReason?: string
 
   @OneToMany(
     type => Comment,
@@ -129,17 +137,21 @@ export class User {
   endorsementCount: number
 
   @Column({ nullable: true })
-  lastPostedAt: Date
+  lastPostedAt?: Date
 
   @Column({ nullable: true })
-  lastUploadedImageAt: Date
+  lastUploadedImageAt?: Date
 
   @Column({ nullable: true })
-  lastCommentedAt: Date
+  lastCommentedAt?: Date
 
   @Field({ nullable: true })
   @Column({ nullable: true })
-  title: string
+  tag?: string
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  tagColor?: string
 
   @OneToMany(
     type => PostView,

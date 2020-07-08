@@ -61,7 +61,7 @@ export class Comment {
 
   @Field({ nullable: true })
   @Column({ nullable: true })
-  editedAt: Date
+  editedAt?: Date
 
   @Field(type => [String])
   @Column('text', { array: true, default: '{}' })

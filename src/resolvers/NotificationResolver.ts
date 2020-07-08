@@ -8,7 +8,10 @@ import { Context } from '../Context'
 export class NotificationResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Query(returns => [ReplyNotification])
-  async notifications(@Arg('unreadOnly') unreadOnly: boolean, @Ctx() { userId }: Context) {
+  async notifications(
+    @Arg('unreadOnly', { defaultValue: false }) unreadOnly: boolean,
+    @Ctx() { userId }: Context,
+  ) {
     const qb = this.replyNotifRepository
       .createQueryBuilder('notification')
       .leftJoinAndSelect('notification.fromUser', 'fromUser')

@@ -153,6 +153,8 @@ export class TopicResolver extends RepositoryInjector {
         .leftJoinAndSelect('user.hiddenPosts', 'hiddenPosts')
         .getOne()
 
+      if (!user) throw new Error('User login invalid')
+
       const hiddenTopics = (await user.hiddenTopics).map(topic => topic.name)
       const blockedUsers = (await user.blockedUsers).map(user => user.id)
       const hiddenPosts = (await user.hiddenPosts).map(post => post.id)
