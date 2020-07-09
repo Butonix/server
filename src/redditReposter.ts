@@ -224,7 +224,7 @@ async function redditReposter() {
 
     return {
       id: post.id,
-      title: post.title,
+      title: post.title.replace(/&amp;/g, '&'),
       createdAt: new Date(),
       authorId: cometBot.id,
       thumbnailUrl,
