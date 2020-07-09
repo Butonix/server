@@ -31,6 +31,8 @@ import { ReplyNotification } from './entities/ReplyNotification'
 import { NotificationResolver } from './resolvers/NotificationResolver'
 import { FakeDataGenerator } from './generateFakeData'
 import { getRepository, getTreeRepository } from 'typeorm'
+// @ts-ignore
+import { avataaarEndpoint } from './avataaars/avataaarEndpoint'
 
 // register 3rd party IOC container
 TypeORM.useContainer(Container)
@@ -213,6 +215,8 @@ async function bootstrap() {
         res.send({ error: err.message })
       },
     )
+
+    app.get('/avataaar', avataaarEndpoint)
 
     app.listen({ port: process.env.PORT || 4000 }, () => {
       console.log(`Server ready at http://localhost:4000${server.graphqlPath}`)

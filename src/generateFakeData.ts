@@ -8,7 +8,7 @@ import faker from 'faker'
 import { Topic } from './entities/Topic'
 import shortid from 'shortid'
 import { Repository, TreeRepository } from 'typeorm'
-import { randomAvataaarUrl } from './randomAvataaar'
+import { randomAvataaarUrl } from './avataaars/randomAvataaar'
 
 export class FakeDataGenerator {
   async generateFakeData(

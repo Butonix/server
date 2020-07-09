@@ -8,7 +8,7 @@ import { InjectRepository } from 'typeorm-typedi-extensions'
 import { createAccessToken } from '../auth'
 import * as argon2 from 'argon2'
 import { RequiresAuth } from '../RequiresAuth'
-import { randomAvataaarUrl } from '../randomAvataaar'
+import { randomAvataaarUrl } from '../avataaars/randomAvataaar'
 
 @Resolver()
 export class AuthResolver {
