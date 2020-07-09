@@ -116,7 +116,7 @@ async function redditReposter() {
       admin: true,
       bio: 'The official Comet bot.',
       tag: 'Bot',
-      tagColor: 'blue',
+      tagColor: 'red lighten-1',
     })
   }
 
