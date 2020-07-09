@@ -1,4 +1,3 @@
-// @ts-ignore
 import React from 'react'
 // @ts-ignore
 import RDS from 'react-dom/server'
