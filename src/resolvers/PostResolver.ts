@@ -36,14 +36,14 @@ import { s3 } from '../s3'
 import { discordReport } from '../DiscordBot'
 import cheerio from 'cheerio'
 import request from 'request'
-import { Comment } from '../entities/Comment'
-import * as faker from 'faker'
-import * as argon2 from 'argon2'
+// @ts-ignore
+import isUrl from 'is-url'
 
 @Resolver(of => Post)
 export class PostResolver extends RepositoryInjector {
   @Query(returns => String)
   async getTitleAtUrl(@Arg('url') url: string) {
+    if (!isUrl(url)) return ''
     let result = ''
     try {
       result = await new Promise((resolve, reject) =>

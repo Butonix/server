@@ -52,16 +52,18 @@ const subreddits = [
   '4chan',
 ]
 
-function mapSubredditToTopics(subreddit: string): string[] {
-  subreddit = subreddit.toLowerCase()
-  if (subreddit === 'internetisbeautiful') return ['internet_is_beautiful']
-  else if (subreddit === 'worldnews') return ['news']
-  else if (subreddit === 'listentothis') return ['music']
-  else if (subreddit === 'indieheads') return ['music', 'indie_music']
-  else if (subreddit === 'hiphopheads') return ['music', 'hip_hop_music']
-  else if (subreddit === 'gadgets') return ['technology', 'gadgets']
-  else if (subreddit === 'greentext') return ['4chan']
-  else return [subreddit]
+function mapPostToTopics(post: any): string[] {
+  const subreddit = post.subreddit.toLowerCase()
+  let topics = [subreddit]
+  if (subreddit === 'internetisbeautiful') topics = ['internet_is_beautiful']
+  else if (subreddit === 'worldnews') topics = ['news']
+  else if (subreddit === 'listentothis') topics = ['music']
+  else if (subreddit === 'indieheads') topics = ['music', 'indie_music']
+  else if (subreddit === 'hiphopheads') topics = ['music', 'hip_hop_music']
+  else if (subreddit === 'gadgets') topics = ['technology', 'gadgets']
+  else if (subreddit === 'greentext') topics = ['4chan']
+  if (post.title.toLowerCase().includes('trump')) topics.push('donald_trump')
+  return topics
 }
 
 async function redditReposter() {
@@ -144,7 +146,7 @@ async function redditReposter() {
 
   let topicsToSave: any[] = []
   redditPosts.forEach((post: any) => {
-    const mappedTopics = mapSubredditToTopics(post.subreddit).map((topicName: any) => ({
+    const mappedTopics = mapPostToTopics(post).map((topicName: any) => ({
       name: topicName,
     }))
     topicsToSave.push(...mappedTopics)
@@ -231,8 +233,8 @@ async function redditReposter() {
       domain: post.domain,
       type,
       link: post.url,
-      topicsarr: mapSubredditToTopics(post.subreddit),
-      topics: mapSubredditToTopics(post.subreddit).map((topicName: any) => ({ name: topicName })),
+      topicsarr: mapPostToTopics(post),
+      topics: mapPostToTopics(post).map((topicName: any) => ({ name: topicName })),
     } as Post
   })
 

@@ -16,6 +16,7 @@ import {
 import { Lazy } from '../lazy'
 import { Post } from './Post'
 import { CommentEndorsement } from './CommentEndorsement'
+import { GraphQLJSON } from 'graphql-scalars'
 
 @ObjectType()
 @Entity()
@@ -51,8 +52,8 @@ export class Comment {
   @Column({ nullable: true })
   rootCommentId: string
 
-  @Field()
-  @Column('text')
+  @Field(type => GraphQLJSON)
+  @Column('jsonb')
   textContent: string
 
   @Field()

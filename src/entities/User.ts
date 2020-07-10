@@ -23,7 +23,7 @@ export class User {
   email?: string
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   bio?: string
 
   @Field({ nullable: true })
