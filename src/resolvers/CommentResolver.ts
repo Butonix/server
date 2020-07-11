@@ -92,7 +92,6 @@ export class CommentResolver extends RepositoryInjector {
     const qb = await this.commentRepository
       .createQueryBuilder('comment')
       .where('comment.postId = :postId', { postId: post.id })
-      .andWhere('comment.deleted = false')
 
     if (userId) {
       qb.loadRelationCountAndMap(
@@ -125,7 +124,17 @@ export class CommentResolver extends RepositoryInjector {
 
     const comments = await qb.getMany()
 
-    comments.forEach(comment => (comment.isEndorsed = Boolean(comment.personalEndorsementCount)))
+    comments.forEach(comment => {
+      comment.isEndorsed = Boolean(comment.personalEndorsementCount)
+      if (comment.deleted) {
+        comment.textContent = JSON.stringify({
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ text: '[deleted]', type: 'text' }] }],
+        })
+        comment.authorId = null
+        comment.author = null
+      }
+    })
 
     return comments
   }
@@ -225,6 +234,7 @@ export class CommentResolver extends RepositoryInjector {
 
   @FieldResolver()
   async author(@Root() comment: Comment, @Ctx() { userLoader }: Context) {
+    if (!comment.authorId) return null
     return userLoader.load(comment.authorId)
   }
 

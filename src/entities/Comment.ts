@@ -26,14 +26,14 @@ export class Comment {
   @PrimaryColumn('varchar', { length: 20 })
   id: string
 
-  @Field(type => User)
+  @Field(type => User, { nullable: true })
   @ManyToOne(
     type => User,
     user => user.comments,
   )
   author: Lazy<User>
 
-  @Field(type => ID)
+  @Field(type => ID, { nullable: true })
   @Column({ nullable: true })
   authorId: string
 

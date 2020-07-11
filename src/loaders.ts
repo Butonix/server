@@ -3,7 +3,6 @@ import { User } from './entities/User'
 import { Comment } from './entities/Comment'
 import DataLoader from 'dataloader'
 import { Post } from './entities/Post'
-import { Topic } from './entities/Topic'
 import { PostView } from './entities/PostView'
 
 export const UserLoader = new DataLoader(async (keys: string[]) => {
