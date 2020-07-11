@@ -6,7 +6,6 @@ import { User } from './User'
 import { PostEndorsement } from './PostEndorsement'
 import { Topic } from './Topic'
 import { PostView } from './PostView'
-import { GraphQLJSON } from 'graphql-scalars'
 
 export enum PostType {
   TEXT = 'TEXT',
@@ -25,8 +24,8 @@ export class Post {
   @Column()
   title: string
 
-  @Field(type => GraphQLJSON, { nullable: true })
-  @Column('jsonb', { nullable: true })
+  @Field(type => String, { nullable: true })
+  @Column('text', { nullable: true })
   textContent?: string
 
   @Field({ nullable: true })

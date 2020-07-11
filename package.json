@@ -57,7 +57,6 @@
     "faker": "^4.1.0",
     "get-title-at-url": "^1.1.8",
     "graphql": "^14.5.8",
-    "graphql-scalars": "^1.2.1",
     "graphql-tools": "^4.0.6",
     "is-image-url": "^1.1.8",
     "is-url": "^1.2.4",
@@ -76,6 +75,7 @@
     "typeorm": "^0.2.25",
     "typeorm-typedi-extensions": "^0.2.3",
     "typescript": "^3.9.6",
-    "url-parse": "^1.4.7"
+    "url-parse": "^1.4.7",
+    "xss": "^1.0.7"
   }
 }

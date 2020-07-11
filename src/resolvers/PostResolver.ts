@@ -4,7 +4,6 @@ import {
   Ctx,
   FieldResolver,
   ID,
-  Int,
   Mutation,
   Query,
   Resolver,
@@ -38,6 +37,8 @@ import cheerio from 'cheerio'
 import request from 'request'
 // @ts-ignore
 import isUrl from 'is-url'
+import xss from 'xss'
+import { whiteList } from '../xssWhiteList'
 
 @Resolver(of => Post)
 export class PostResolver extends RepositoryInjector {
@@ -431,10 +432,16 @@ export class PostResolver extends RepositoryInjector {
   ) {
     const user = await this.userRepository.findOne(userId)
 
+    if (!user) throw new Error('Invalid login')
+
     if (user.lastPostedAt && !user.admin) {
       if (differenceInSeconds(new Date(), user.lastPostedAt) < 60 * 2) {
         throw new Error('Please wait 2 minutes between posts')
       }
+    }
+
+    if (textContent) {
+      textContent = xss.filterXSS(textContent, { whiteList })
     }
 
     this.userRepository.update(userId, { lastPostedAt: new Date() })

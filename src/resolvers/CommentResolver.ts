@@ -16,12 +16,13 @@ import { RepositoryInjector } from '../RepositoryInjector'
 import { Comment } from '../entities/Comment'
 import { SubmitCommentArgs } from '../args/SubmitCommentArgs'
 import shortid from 'shortid'
-import { PostView } from '../entities/PostView'
 import { PostCommentsArgs } from '../args/PostCommentsArgs'
-import { Sort, Time } from '../args/FeedArgs'
+import { Sort } from '../args/FeedArgs'
 import { User } from '../entities/User'
 import { differenceInSeconds } from 'date-fns'
 import { ReplyNotification } from '../entities/ReplyNotification'
+import xss from 'xss'
+import { whiteList } from '../xssWhiteList'
 
 @Resolver(of => Comment)
 export class CommentResolver extends RepositoryInjector {
@@ -35,11 +36,15 @@ export class CommentResolver extends RepositoryInjector {
 
     const user = await this.userRepository.findOne(userId)
 
+    if (!user) throw new Error('Invalid login')
+
     if (user.lastCommentedAt && !user.admin) {
       if (differenceInSeconds(new Date(), user.lastCommentedAt) < 15) {
         throw new Error('Please wait 15 seconds between comments')
       }
     }
+
+    textContent = xss.filterXSS(textContent, { whiteList })
 
     this.userRepository.update(userId, { lastCommentedAt: new Date() })
 
@@ -127,10 +132,7 @@ export class CommentResolver extends RepositoryInjector {
     comments.forEach(comment => {
       comment.isEndorsed = Boolean(comment.personalEndorsementCount)
       if (comment.deleted) {
-        comment.textContent = JSON.stringify({
-          type: 'doc',
-          content: [{ type: 'paragraph', content: [{ text: '[deleted]', type: 'text' }] }],
-        })
+        comment.textContent = `<p>[deleted]</p>`
         comment.authorId = null
         comment.author = null
       }
