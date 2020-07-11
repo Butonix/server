@@ -196,7 +196,7 @@ export class PostResolver extends RepositoryInjector {
       qb.addOrderBy('post.createdAt', 'DESC')
     } else if (sort === Sort.HOT) {
       qb.addSelect(
-        'CAST(post.endorsementCount AS float)/((CAST((CAST(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS int) - CAST(EXTRACT(EPOCH FROM post.createdAt) AS int)+100000) AS FLOAT)/6.0)^(1.0/3.0))',
+        '(CAST(post.endorsementCount AS float) + 1)/((CAST((CAST(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS int) - CAST(EXTRACT(EPOCH FROM post.createdAt) AS int)+100000) AS FLOAT)/6.0)^(1.0/3.0))',
         'post_hotrank',
       )
       qb.addOrderBy('post_hotrank', 'DESC')

@@ -184,14 +184,14 @@ async function redditReposter() {
         const timeout = (cb: any, interval: number) => () =>
           new Promise(resolve => setTimeout(() => cb(resolve), interval))
 
-        const onTimeout = timeout((resolve: any) => resolve({}), 3000)
+        const onTimeout = timeout((resolve: any) => resolve({}), 10000)
 
         parseResult = await Promise.race([longTask, onTimeout].map(f => f()))
 
         if (!parseResult.lead_image_url) {
           try {
             // eslint-disable-next-line @typescript-eslint/camelcase
-            parseResult.lead_image_url = await getThumbnailUrl(post.url)
+            parseResult.lead_image_url = await getThumbnailUrl(post.url, 10000)
           } catch (e) {}
         }
       }

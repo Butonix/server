@@ -2,13 +2,13 @@
 import JSSoup from 'jssoup'
 import axios from 'axios'
 
-export const getThumbnailUrl = async (link: string) => {
+export const getThumbnailUrl = async (link: string, timeout = 3000) => {
   const headers = { 'User-Agent': 'getcomet.net thumbnail saver' }
 
   let response
 
   try {
-    response = await axios.get(link, { headers, timeout: 3000 })
+    response = await axios.get(link, { headers, timeout })
   } catch (e) {
     return null
   }
