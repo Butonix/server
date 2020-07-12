@@ -7,7 +7,7 @@ export class SearchPostsArgs extends PaginationArgs {
   @Field()
   search: string
 
-  @Field(type => Sort, { defaultValue: Sort.RELEVANCE })
+  @Field(type => Sort, { defaultValue: Sort.NEW })
   sort: Sort
 
   @Field(type => Time, { defaultValue: Time.ALL })
