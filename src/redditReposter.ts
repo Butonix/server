@@ -38,7 +38,6 @@ const subreddits = [
   'videos',
   'news',
   'television',
-  'space',
   'worldnews',
   'sports',
   'InternetIsBeautiful',
@@ -48,8 +47,6 @@ const subreddits = [
   'technology',
   'indieheads',
   'hiphopheads',
-  'greentext',
-  '4chan',
 ]
 
 function mapPostToTopics(post: any): string[] {
@@ -61,7 +58,6 @@ function mapPostToTopics(post: any): string[] {
   else if (subreddit === 'indieheads') topics = ['music', 'indie_music']
   else if (subreddit === 'hiphopheads') topics = ['music', 'hip_hop_music']
   else if (subreddit === 'gadgets') topics = ['technology', 'gadgets']
-  else if (subreddit === 'greentext') topics = ['4chan']
   if (post.title.toLowerCase().includes('trump')) topics.push('donald_trump')
   return topics
 }
