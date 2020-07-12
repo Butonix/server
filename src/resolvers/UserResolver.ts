@@ -106,9 +106,6 @@ export class UserResolver extends RepositoryInjector {
     const qb = this.postRepository
       .createQueryBuilder('post')
       .where('post.authorId = :id', { id: user.id })
-      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
-        return qb.andWhere('comment.deleted = false')
-      })
       .leftJoinAndSelect('post.topics', 'topic')
       .addOrderBy('post.createdAt', 'DESC')
       .andWhere('post.deleted = false')

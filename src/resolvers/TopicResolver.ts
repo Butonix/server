@@ -118,7 +118,7 @@ export class TopicResolver extends RepositoryInjector {
         'post_hotrank',
       )
       qb.addOrderBy('post_hotrank', 'DESC')
-    } else if (sort === Sort.TOP) {
+    } else if (sort === Sort.TOP || sort === Sort.COMMENTS) {
       switch (time) {
         case Time.HOUR:
           qb.andWhere("post.createdAt > NOW() - INTERVAL '1 hour'")
@@ -140,7 +140,11 @@ export class TopicResolver extends RepositoryInjector {
         default:
           break
       }
-      qb.addOrderBy('post.endorsementCount', 'DESC')
+      if (sort === Sort.TOP) {
+        qb.addOrderBy('post.endorsementCount', 'DESC')
+      } else if (sort === Sort.COMMENTS) {
+        qb.addOrderBy('post.commentCount', 'DESC')
+      }
       qb.addOrderBy('post.createdAt', 'DESC')
     }
 
@@ -185,9 +189,6 @@ export class TopicResolver extends RepositoryInjector {
       .skip(page * pageSize)
       .take(pageSize)
       .leftJoinAndSelect('post.topics', 'topic')
-      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
-        return qb.andWhere('comment.deleted = false')
-      })
       .getMany()
 
     posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))

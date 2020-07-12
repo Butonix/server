@@ -60,6 +60,8 @@ export class CommentResolver extends RepositoryInjector {
       isEndorsed: false,
     } as Comment)
 
+    this.postRepository.increment({ id: postId }, 'commentCount', 1)
+
     if (parentCommentId) {
       const parentComment = await this.commentRepository.findOne(parentCommentId)
       if (parentComment.authorId !== userId) {
@@ -148,6 +150,8 @@ export class CommentResolver extends RepositoryInjector {
     const user = await this.userRepository.findOne(userId)
     if (comment.authorId !== userId && !user.admin)
       throw new Error('Attempt to delete post by someone other than author')
+
+    this.postRepository.decrement({ id: comment.postId }, 'commentCount', 1)
 
     await this.commentRepository
       .createQueryBuilder()

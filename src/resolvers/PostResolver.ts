@@ -162,12 +162,7 @@ export class PostResolver extends RepositoryInjector {
       )
     }
 
-    const posts = await qb
-      .leftJoinAndSelect('post.topics', 'topic')
-      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
-        return qb.andWhere('comment.deleted = false')
-      })
-      .getMany()
+    const posts = await qb.leftJoinAndSelect('post.topics', 'topic').getMany()
 
     posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
 
@@ -200,7 +195,7 @@ export class PostResolver extends RepositoryInjector {
         'post_hotrank',
       )
       qb.addOrderBy('post_hotrank', 'DESC')
-    } else if (sort === Sort.TOP) {
+    } else if (sort === Sort.TOP || sort === Sort.COMMENTS) {
       switch (time) {
         case Time.HOUR:
           qb.andWhere("post.createdAt > NOW() - INTERVAL '1 hour'")
@@ -222,7 +217,11 @@ export class PostResolver extends RepositoryInjector {
         default:
           break
       }
-      qb.addOrderBy('post.endorsementCount', 'DESC')
+      if (sort === Sort.TOP) {
+        qb.addOrderBy('post.endorsementCount', 'DESC')
+      } else if (sort === Sort.COMMENTS) {
+        qb.addOrderBy('post.commentCount', 'DESC')
+      }
       qb.addOrderBy('post.createdAt', 'DESC')
     }
 
@@ -279,9 +278,6 @@ export class PostResolver extends RepositoryInjector {
       .skip(page * pageSize)
       .take(pageSize)
       .leftJoinAndSelect('post.topics', 'topic')
-      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
-        return qb.andWhere('comment.deleted = false')
-      })
       .getMany()
 
     posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
@@ -301,12 +297,7 @@ export class PostResolver extends RepositoryInjector {
 
     if (posts.length === 0) return []
 
-    const qb = this.postRepository
-      .createQueryBuilder('post')
-      .whereInIds(posts.map(post => post.id))
-      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
-        return qb.andWhere('comment.deleted = false')
-      })
+    const qb = this.postRepository.createQueryBuilder('post').whereInIds(posts.map(post => post.id))
 
     qb.loadRelationCountAndMap(
       'post.personalEndorsementCount',
@@ -335,9 +326,6 @@ export class PostResolver extends RepositoryInjector {
       .createQueryBuilder('post')
       .andWhere('post.sticky = TRUE')
       .leftJoinAndSelect('post.topics', 'topic')
-      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
-        return qb.andWhere('comment.deleted = false')
-      })
 
     if (userId) {
       qb.loadRelationCountAndMap(
@@ -365,9 +353,6 @@ export class PostResolver extends RepositoryInjector {
       .createQueryBuilder('post')
       .where('post.id = :postId', { postId })
       .andWhere('post.deleted = false')
-      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
-        return qb.andWhere('comment.deleted = false')
-      })
 
     if (userId) {
       qb.loadRelationCountAndMap(
@@ -400,9 +385,6 @@ export class PostResolver extends RepositoryInjector {
     const post = await this.postRepository
       .createQueryBuilder('post')
       .andWhereInIds(postId)
-      .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
-        return qb.andWhere('comment.deleted = false')
-      })
       .getOne()
 
     if (!post) throw new Error('Invalid post id')

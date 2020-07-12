@@ -37,9 +37,6 @@ export const PostLoader = new DataLoader(async (keys: string[]) => {
   const entities = await getRepository(Post)
     .createQueryBuilder('post')
     .whereInIds(keys)
-    .loadRelationCountAndMap('post.commentCount', 'post.comments', 'comment', qb => {
-      return qb.andWhere('comment.deleted = false')
-    })
     .getMany()
 
   const entityMap: any = {}

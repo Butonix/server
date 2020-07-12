@@ -73,6 +73,7 @@ export class Post {
   comments: Lazy<Comment[]>
 
   @Field()
+  @Column({ default: 0 })
   commentCount: number
 
   @Field(type => [Topic])
