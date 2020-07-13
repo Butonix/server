@@ -26,13 +26,14 @@ import { Filter, Sort, Time, Type } from './args/FeedArgs'
 import { FiltersResolver } from './resolvers/FiltersResolver'
 import aws from 'aws-sdk'
 import multer from 'multer'
-import { S3Storage } from './S3Storage'
+import { ImageStorage } from './ImageStorage'
 import { ReplyNotification } from './entities/ReplyNotification'
 import { NotificationResolver } from './resolvers/NotificationResolver'
 import { FakeDataGenerator } from './generateFakeData'
 import { getRepository, getTreeRepository } from 'typeorm'
 // @ts-ignore
 import { avataaarEndpoint } from './avataaars/avataaarEndpoint'
+import { ProfilePicStorage } from './ProfilePicStorage'
 
 // register 3rd party IOC container
 TypeORM.useContainer(Container)
@@ -194,7 +195,7 @@ async function bootstrap() {
       limits: {
         fileSize: 4 * 1024 * 1024,
       },
-      storage: new S3Storage(),
+      storage: new ImageStorage(),
     })
 
     const imageUpload = upload.single('image')
@@ -203,6 +204,39 @@ async function bootstrap() {
       '/upload',
       (req: any, res: any, next: any) => {
         imageUpload(req, res, (err: any): any => {
+          if (err) next(err)
+          else next()
+        })
+      },
+      (req: any, res: any, next: any) => {
+        // @ts-ignore
+        return res.send({ link: req.file.location })
+      },
+      (err: any, req: any, res: any, next: any) => {
+        res.send({ error: err.message })
+      },
+    )
+
+    const uploadProfilePic = multer({
+      fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+          cb(null, true)
+        } else {
+          cb(new Error('Image must be JPEG or PNG'))
+        }
+      },
+      limits: {
+        fileSize: 4 * 1024 * 1024,
+      },
+      storage: new ProfilePicStorage(),
+    })
+
+    const profilePicUpload = uploadProfilePic.single('image')
+
+    app.post(
+      '/uploadprofilepic',
+      (req: any, res: any, next: any) => {
+        profilePicUpload(req, res, (err: any): any => {
           if (err) next(err)
           else next()
         })

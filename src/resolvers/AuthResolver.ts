@@ -9,13 +9,17 @@ import { createAccessToken } from '../auth'
 import * as argon2 from 'argon2'
 import { RequiresAuth } from '../RequiresAuth'
 import { randomAvataaarUrl } from '../avataaars/randomAvataaar'
+import { SignUpArgs } from '../args/SignUpArgs'
 
 @Resolver()
 export class AuthResolver {
   @InjectRepository(User) readonly userRepository: Repository<User>
 
   @Mutation(returns => LoginResponse)
-  async signUp(@Args() { username, password }: LoginArgs, @Ctx() { req, res }: Context) {
+  async signUp(@Args() { username, password, email }: SignUpArgs, @Ctx() { req, res }: Context) {
+    if (username.toLowerCase() === 'null' || username.toLowerCase() === 'undefined')
+      throw new Error('Invalid username')
+
     const foundUser = await this.userRepository.findOne({ where: `"username" ILIKE '${username}'` })
     if (foundUser) throw new Error('Username taken')
 
@@ -23,10 +27,10 @@ export class AuthResolver {
 
     const user = await this.userRepository.save({
       username,
+      email,
       passwordHash,
       createdAt: new Date(),
       lastLogin: new Date(),
-      profilePicUrl: randomAvataaarUrl(),
     } as User)
 
     return {

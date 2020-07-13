@@ -70,6 +70,17 @@ const facialHairTypes = [
   'MoustacheMagnum',
 ]
 
+const facialHairColors = [
+  'Auburn',
+  'Black',
+  'Blonde',
+  'BlondeGolden',
+  'Brown',
+  'BrownDark',
+  'Platinum',
+  'Red',
+]
+
 const clotheTypes = [
   'BlazerShirt',
   'BlazerSweater',
@@ -80,6 +91,24 @@ const clotheTypes = [
   'ShirtCrewNeck',
   'ShirtScoopNeck',
   'ShirtVNeck',
+]
+
+const clotheColors = [
+  'Black',
+  'Blue01',
+  'Blue02',
+  'Blue03',
+  'Gray01',
+  'Gray02',
+  'Heather',
+  'PastelBlue',
+  'PastelGreen',
+  'PastelOrange',
+  'PastelRed',
+  'PastelYellow',
+  'Pink',
+  'Red',
+  'White',
 ]
 
 const eyeTypes = [
@@ -136,11 +165,13 @@ export const randomAvataaarUrl = () => {
   const accessoriesType = randomFromArr(accessoriesTypes)
   const hairColor = randomFromArr(hairColors)
   const facialHairType = randomFromArr(facialHairTypes)
+  const facialHairColor = randomFromArr(facialHairColors)
   const clotheType = randomFromArr(clotheTypes)
+  const clotheColor = randomFromArr(clotheColors)
   const eyeType = randomFromArr(eyeTypes)
   const eyebrowType = randomFromArr(eyebrowTypes)
   const mouthType = randomFromArr(mouthTypes)
   const skinColor = randomFromArr(skinColors)
 
-  return `https://api.getcomet.net/avataaar/?avatarStyle=${avatarStyle}&topType=${topType}&accessoriesType=${accessoriesType}&hairColor=${hairColor}&facialHairType=${facialHairType}&clotheType=${clotheType}&eyeType=${eyeType}&eyebrowType=${eyebrowType}&mouthType=${mouthType}&skinColor=${skinColor}`
+  return `https://api.getcomet.net/avataaar/?avatarStyle=${avatarStyle}&topType=${topType}&accessoriesType=${accessoriesType}&hairColor=${hairColor}&facialHairType=${facialHairType}&facialHairColor=${facialHairColor}&clotheType=${clotheType}&clotheColor=${clotheColor}&eyeType=${eyeType}&eyebrowType=${eyebrowType}&mouthType=${mouthType}&skinColor=${skinColor}`
 }

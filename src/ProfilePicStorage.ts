@@ -9,7 +9,7 @@ import { differenceInSeconds } from 'date-fns'
 import { getRepository } from 'typeorm'
 import { User } from './entities/User'
 
-export class S3Storage implements StorageEngine {
+export class ProfilePicStorage implements StorageEngine {
   async _handleFile(
     req: Express.Request,
     file: any,
@@ -23,29 +23,34 @@ export class S3Storage implements StorageEngine {
 
     const user = await getRepository(User).findOne(userId)
 
+    if (!user) {
+      callback(new Error('Invalid login'))
+      return
+    }
+
     if (user.lastUploadedImageAt && !user.admin) {
       if (differenceInSeconds(new Date(), user.lastUploadedImageAt) < 60 * 2) {
-        callback(new Error('Please wait 2 minutes between posts'))
+        callback(new Error('Please wait 2 minutes between image uploads'))
         return
       }
     }
 
     await getRepository(User).update(userId, { lastUploadedImageAt: new Date() })
 
-    /*const transformer = sharp()
-      .resize(2000, 2000, { fit: 'inside' })
+    const transformer = sharp()
+      .resize(150, 150, { fit: 'cover' })
       .png()
 
     const outStream = new Stream.PassThrough()
 
-    file.stream.pipe(transformer).pipe(outStream)*/
+    file.stream.pipe(transformer).pipe(outStream)
 
-    const key = `${shortid.generate()}.png`
+    const key = `profile/${user.id}.png`
 
     const upload = s3.upload({
       Bucket: 'i.getcomet.net',
       Key: key,
-      Body: file.stream,
+      Body: outStream,
       ContentType: file.mimetype,
       ACL: 'public-read',
     })

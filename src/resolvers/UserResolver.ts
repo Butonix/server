@@ -37,6 +37,8 @@ export class UserResolver extends RepositoryInjector {
 
   @Query(returns => User, { nullable: true })
   async user(@Arg('username') username: string) {
+    if (!username) return null
+
     return this.userRepository
       .createQueryBuilder('user')
       .where('user.username ILIKE :username', { username })
@@ -145,6 +147,21 @@ export class UserResolver extends RepositoryInjector {
       .of(userId)
       .add(followedId)
 
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
+  async setProfilePicUrl(@Arg('profilePicUrl') profilePicUrl: string, @Ctx() { userId }: Context) {
+    if (
+      !(
+        profilePicUrl.startsWith('https://i.getcomet.net/profile') ||
+        profilePicUrl.startsWith('https://api.getcomet.net/avataaar')
+      )
+    ) {
+      throw new Error('Invalid URL')
+    }
+    await this.userRepository.update(userId, { profilePicUrl })
     return true
   }
 
