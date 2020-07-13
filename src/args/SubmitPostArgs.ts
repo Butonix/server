@@ -1,6 +1,13 @@
 import { ArgsType, Field } from 'type-graphql'
 import { PostType } from '../entities/Post'
-import { Length, ArrayMaxSize, ArrayMinSize, ArrayUnique, Matches } from 'class-validator'
+import {
+  Length,
+  ArrayMaxSize,
+  ArrayMinSize,
+  ArrayUnique,
+  Matches,
+  IsOptional,
+} from 'class-validator'
 
 @ArgsType()
 export class SubmitPostArgs {
@@ -12,10 +19,12 @@ export class SubmitPostArgs {
   type: PostType
 
   @Field({ nullable: true })
+  @IsOptional()
   @Length(1, 5000)
   link?: string
 
   @Field({ nullable: true })
+  @IsOptional()
   @Length(1, 40000)
   textContent?: string
 
