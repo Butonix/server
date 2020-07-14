@@ -31,7 +31,6 @@ const entities = [
 const subreddits = [
   'programming',
   'conspiracy',
-  'Music',
   'science',
   'Games',
   'movies',
@@ -43,7 +42,6 @@ const subreddits = [
   'InternetIsBeautiful',
   'gadgets',
   'Futurology',
-  'listentothis',
   'technology',
   'indieheads',
   'hiphopheads',
@@ -54,7 +52,6 @@ function mapPostToTopics(post: any): string[] {
   let topics = [subreddit]
   if (subreddit === 'internetisbeautiful') topics = ['internet_is_beautiful']
   else if (subreddit === 'worldnews') topics = ['news']
-  else if (subreddit === 'listentothis') topics = ['music']
   else if (subreddit === 'indieheads') topics = ['music', 'indie_music']
   else if (subreddit === 'hiphopheads') topics = ['music', 'hip_hop_music']
   else if (subreddit === 'gadgets') topics = ['technology', 'gadgets']
