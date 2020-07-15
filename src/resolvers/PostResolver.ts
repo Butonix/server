@@ -672,11 +672,4 @@ export class PostResolver extends RepositoryInjector {
   async postView(@Root() post: Post, @Ctx() { postViewLoader, userId }: Context) {
     return postViewLoader.load({ postId: post.id, userId })
   }
-
-  @FieldResolver()
-  async newCommentCount(@Root() post: Post, @Ctx() { userId }: Context) {
-    if (!userId) return -1
-    if (!post.postView) return -1
-    return post.commentCount - post.postView.lastCommentCount
-  }
 }
