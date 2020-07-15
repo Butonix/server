@@ -29,6 +29,7 @@ export class AuthResolver {
       username,
       email,
       passwordHash,
+      bio: 'New Comet user',
       createdAt: new Date(),
       lastLogin: new Date(),
     } as User)

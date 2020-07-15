@@ -136,6 +136,29 @@ export class UserResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
+  async setProfilePicUrl(@Arg('profilePicUrl') profilePicUrl: string, @Ctx() { userId }: Context) {
+    if (
+      !(
+        profilePicUrl.startsWith('https://i.getcomet.net/profile') ||
+        profilePicUrl.startsWith('https://api.getcomet.net/avataaar')
+      )
+    ) {
+      throw new Error('Invalid URL')
+    }
+    await this.userRepository.update(userId, { profilePicUrl })
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
+  async setBio(@Arg('bio') bio: string, @Ctx() { userId }: Context) {
+    if (bio.length > 160) throw new Error('Bio must be 160 characters or less')
+    await this.userRepository.update(userId, { bio })
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
   async followUser(@Arg('followedId', type => ID) followedId: string, @Ctx() { userId }: Context) {
     if (followedId === userId) {
       throw new Error('Cannot follow yourself')
@@ -147,21 +170,6 @@ export class UserResolver extends RepositoryInjector {
       .of(userId)
       .add(followedId)
 
-    return true
-  }
-
-  @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async setProfilePicUrl(@Arg('profilePicUrl') profilePicUrl: string, @Ctx() { userId }: Context) {
-    if (
-      !(
-        profilePicUrl.startsWith('https://i.getcomet.net/profile') ||
-        profilePicUrl.startsWith('https://api.getcomet.net/avataaar')
-      )
-    ) {
-      throw new Error('Invalid URL')
-    }
-    await this.userRepository.update(userId, { profilePicUrl })
     return true
   }
 

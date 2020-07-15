@@ -170,14 +170,18 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @Query(returns => [Post])
-  async homeFeed(
-    @Args() { page, pageSize, sort, time, filter, types }: FeedArgs,
+  async feed(
+    @Args() { page, pageSize, sort, time, filter, types, topicName }: FeedArgs,
     @Ctx() { userId }: Context,
   ) {
     const qb = this.postRepository
       .createQueryBuilder('post')
       .andWhere('post.deleted = false')
       .andWhere('post.sticky = false')
+
+    if (topicName) {
+      qb.andWhere(':topicName ILIKE ANY(post.topicsarr)', { topicName })
+    }
 
     if (types.length === 1) {
       qb.andWhere(`post.type = '${types[0].toUpperCase()}'`)
@@ -237,17 +241,19 @@ export class PostResolver extends RepositoryInjector {
 
       if (user) {
         const hiddenTopics = (await user.hiddenTopics).map(topic => topic.name)
-        const followedTopics = (await user.followedTopics).map(topic => topic.name)
         const blockedUsers = (await user.blockedUsers).map(user => user.id)
         const hiddenPosts = (await user.hiddenPosts).map(post => post.id)
 
-        if (filter === Filter.MYTOPICS) {
-          if (followedTopics.length > 0) {
-            qb.andWhere(
-              'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:followedTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) > 0',
-            ).setParameter('followedTopics', followedTopics)
-          } else {
-            return []
+        if (!topicName) {
+          if (filter === Filter.MYTOPICS) {
+            const followedTopics = (await user.followedTopics).map(topic => topic.name)
+            if (followedTopics.length > 0) {
+              qb.andWhere(
+                'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:followedTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) > 0',
+              ).setParameter('followedTopics', followedTopics)
+            } else {
+              return []
+            }
           }
         }
 

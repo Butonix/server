@@ -92,110 +92,6 @@ export class TopicResolver extends RepositoryInjector {
     return topics
   }
 
-  @Query(returns => [Post])
-  async topicFeed(
-    @Args() { page, pageSize, sort, time, types, topicName }: TopicFeedArgs,
-    @Ctx() { userId }: Context,
-  ) {
-    const qb = this.postRepository
-      .createQueryBuilder('post')
-      .andWhere('post.deleted = false')
-      .andWhere(':topicName ILIKE ANY(post.topicsarr)', { topicName })
-
-    if (types.length === 1) {
-      qb.andWhere(`post.type = '${types[0].toUpperCase()}'`)
-    } else if (types.length === 2) {
-      qb.andWhere(
-        `post.type = '${types[0].toUpperCase()}' OR post.type = '${types[1].toUpperCase()}'`,
-      )
-    }
-
-    if (sort === Sort.NEW) {
-      qb.addOrderBy('post.createdAt', 'DESC')
-    } else if (sort === Sort.HOT) {
-      qb.addSelect(
-        '(CAST(post.endorsementCount AS float) + 1)/((CAST((CAST(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS int) - CAST(EXTRACT(EPOCH FROM post.createdAt) AS int)+100000) AS FLOAT)/6.0)^(1.0/3.0))',
-        'post_hotrank',
-      )
-      qb.addOrderBy('post_hotrank', 'DESC')
-    } else if (sort === Sort.TOP || sort === Sort.COMMENTS) {
-      switch (time) {
-        case Time.HOUR:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 hour'")
-          break
-        case Time.DAY:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 day'")
-          break
-        case Time.WEEK:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 week'")
-          break
-        case Time.MONTH:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 month'")
-          break
-        case Time.YEAR:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 year'")
-          break
-        case Time.ALL:
-          break
-        default:
-          break
-      }
-      if (sort === Sort.TOP) {
-        qb.addOrderBy('post.endorsementCount', 'DESC')
-      } else if (sort === Sort.COMMENTS) {
-        qb.addOrderBy('post.commentCount', 'DESC')
-      }
-      qb.addOrderBy('post.createdAt', 'DESC')
-    }
-
-    if (userId) {
-      const user = await this.userRepository
-        .createQueryBuilder('user')
-        .whereInIds(userId)
-        .leftJoinAndSelect('user.hiddenTopics', 'hiddenTopics')
-        .leftJoinAndSelect('user.blockedUsers', 'blockedUsers')
-        .leftJoinAndSelect('user.hiddenPosts', 'hiddenPosts')
-        .getOne()
-
-      if (user) {
-        const hiddenTopics = (await user.hiddenTopics).map(topic => topic.name)
-        const blockedUsers = (await user.blockedUsers).map(user => user.id)
-        const hiddenPosts = (await user.hiddenPosts).map(post => post.id)
-
-        if (hiddenTopics.length > 0) {
-          qb.andWhere(
-            'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0',
-          ).setParameter('hiddenTopics', hiddenTopics)
-        }
-
-        qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
-
-        qb.andWhere('NOT (post.id = ANY(:hiddenPosts))', { hiddenPosts })
-
-        qb.loadRelationCountAndMap(
-          'post.personalEndorsementCount',
-          'post.endorsements',
-          'endorsement',
-          qb => {
-            return qb
-              .andWhere('endorsement.active = true')
-              .andWhere('endorsement.userId = :userId', { userId })
-          },
-        )
-      }
-    }
-
-    const posts = await qb
-      .skip(page * pageSize)
-      .take(pageSize)
-      .leftJoinAndSelect('post.topics', 'topic')
-      .getMany()
-
-    posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
-
-    return posts
-  }
-
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
   async followTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
@@ -247,7 +143,7 @@ export class TopicResolver extends RepositoryInjector {
   }
 
   @FieldResolver()
-  async capitalizedName(@Root() topic: Topic) {
+  capitalizedName(@Root() topic: Topic) {
     return topic.name
       .replace(/_/g, ' ')
       .split(' ')

@@ -41,4 +41,7 @@ export class FeedArgs extends PaginationArgs {
 
   @Field(type => [Type], { defaultValue: [] })
   types: Type[]
+
+  @Field({ nullable: true })
+  topicName?: string
 }
