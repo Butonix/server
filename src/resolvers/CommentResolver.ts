@@ -170,20 +170,17 @@ export class CommentResolver extends RepositoryInjector {
     @Arg('newTextContent') newTextContent: string,
     @Ctx() { userId }: Context,
   ) {
-    if (newTextContent.length === 0) throw new Error('newTextContent cannot be empty')
-
     const comment = await this.commentRepository.findOne(commentId)
     const user = await this.userRepository.findOne(userId)
     if (comment.authorId !== userId && !user.admin)
       throw new Error('Attempt to edit post by someone other than author')
 
-    const editHistory = comment.editHistory
-    editHistory.unshift(comment.textContent)
+    newTextContent = xss.filterXSS(newTextContent, { whiteList })
 
     await this.commentRepository
       .createQueryBuilder()
       .update()
-      .set({ editedAt: new Date(), textContent: newTextContent, editHistory })
+      .set({ editedAt: new Date(), textContent: newTextContent })
       .where('id = :commentId', { commentId })
       .execute()
 
