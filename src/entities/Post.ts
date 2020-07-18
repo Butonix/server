@@ -32,7 +32,7 @@ export class Post {
   @Column({ nullable: true })
   link?: string
 
-  @Field(type => User)
+  @Field(type => User, { nullable: true })
   @ManyToOne(
     type => User,
     user => user.posts,

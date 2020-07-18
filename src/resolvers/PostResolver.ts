@@ -355,10 +355,7 @@ export class PostResolver extends RepositoryInjector {
 
   @Query(returns => Post, { nullable: true })
   async post(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
-    const qb = this.postRepository
-      .createQueryBuilder('post')
-      .where('post.id = :postId', { postId })
-      .andWhere('post.deleted = false')
+    const qb = this.postRepository.createQueryBuilder('post').where('post.id = :postId', { postId })
 
     if (userId) {
       qb.loadRelationCountAndMap(
@@ -378,6 +375,12 @@ export class PostResolver extends RepositoryInjector {
     if (!post) return null
 
     post.isEndorsed = Boolean(post.personalEndorsementCount)
+
+    if (post.deleted) {
+      post.authorId = null
+      post.author = null
+      if (post.type === 'TEXT') post.textContent = '<p>[deleted]</p>'
+    }
 
     return post
   }
@@ -662,6 +665,7 @@ export class PostResolver extends RepositoryInjector {
 
   @FieldResolver()
   async author(@Root() post: Post, @Ctx() { userLoader }: Context) {
+    if (!post.authorId) return null
     return userLoader.load(post.authorId)
   }
 

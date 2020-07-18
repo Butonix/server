@@ -28,11 +28,17 @@ export class UserResolver extends RepositoryInjector {
       return null
     }
 
-    return this.userRepository
+    const user = await this.userRepository
       .createQueryBuilder('user')
       .whereInIds(userId)
       .andWhere('user.banned = false')
       .getOne()
+
+    if (user) {
+      this.userRepository.update(user.id, { lastLogin: new Date() })
+    }
+
+    return user
   }
 
   @Query(returns => User, { nullable: true })
@@ -219,6 +225,32 @@ export class UserResolver extends RepositoryInjector {
       .relation(User, 'blockedUsers')
       .of(userId)
       .remove(blockedId)
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
+  async banUser(
+    @Arg('bannedId', type => ID) bannedId: string,
+    @Arg('banReason') banReason: string,
+    @Ctx() { userId }: Context,
+  ) {
+    const user = await this.userRepository.findOne(userId)
+    if (!user.admin) throw new Error('Must be admin to ban users')
+
+    await this.userRepository.update(bannedId, { banned: true, banReason })
+
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(returns => Boolean)
+  async unbanUser(@Arg('bannedId', type => ID) bannedId: string, @Ctx() { userId }: Context) {
+    const user = await this.userRepository.findOne(userId)
+    if (!user.admin) throw new Error('Must be admin to unban users')
+
+    await this.userRepository.update(bannedId, { banned: false, banReason: null })
+
     return true
   }
 

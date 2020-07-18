@@ -34,12 +34,14 @@ export class User {
   @Column()
   createdAt: Date
 
+  @Field()
   @Column({ nullable: true })
   lastLogin?: Date
 
   @Column()
   passwordHash: string
 
+  @Field()
   @Column({ default: false })
   admin: boolean
 
