@@ -4,7 +4,6 @@ import {
   Ctx,
   FieldResolver,
   ID,
-  Int,
   Mutation,
   Query,
   Resolver,
@@ -15,10 +14,11 @@ import { Context } from '../Context'
 import { User } from '../entities/User'
 import { RequiresAuth } from '../RequiresAuth'
 import { Comment } from '../entities/Comment'
-import { UserCommentsArgs } from '../args/UserCommentsArgs'
+import { CommentSort, UserCommentsArgs } from '../args/UserCommentsArgs'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Post } from '../entities/Post'
-import { ReplyNotification } from '../entities/ReplyNotification'
+import { Sort, Time } from '../args/FeedArgs'
+import { UserPostsArgs } from '../args/UserPostsArgs'
 
 @Resolver(of => User)
 export class UserResolver extends RepositoryInjector {
@@ -61,7 +61,7 @@ export class UserResolver extends RepositoryInjector {
 
   @Query(returns => [Comment])
   async userComments(
-    @Args() { username, page, pageSize }: UserCommentsArgs,
+    @Args() { username, page, pageSize, sort, time }: UserCommentsArgs,
     @Ctx() { userId }: Context,
   ) {
     const user = await this.userRepository
@@ -73,11 +73,36 @@ export class UserResolver extends RepositoryInjector {
 
     const qb = this.commentRepository
       .createQueryBuilder('comment')
-      .where('comment.authorId = :id', { id: user.id })
+      .andWhere('comment.authorId = :id', { id: user.id })
       .andWhere('comment.deleted = false')
-      .addOrderBy('comment.createdAt', 'DESC')
       .skip(page * pageSize)
       .take(pageSize)
+
+    if (sort === CommentSort.TOP) {
+      switch (time) {
+        case Time.HOUR:
+          qb.andWhere("comment.createdAt > NOW() - INTERVAL '1 hour'")
+          break
+        case Time.DAY:
+          qb.andWhere("comment.createdAt > NOW() - INTERVAL '1 day'")
+          break
+        case Time.WEEK:
+          qb.andWhere("comment.createdAt > NOW() - INTERVAL '1 week'")
+          break
+        case Time.MONTH:
+          qb.andWhere("comment.createdAt > NOW() - INTERVAL '1 month'")
+          break
+        case Time.YEAR:
+          qb.andWhere("comment.createdAt > NOW() - INTERVAL '1 year'")
+          break
+        case Time.ALL:
+          break
+        default:
+          break
+      }
+      qb.addOrderBy('comment.endorsementCount', 'DESC')
+    }
+    qb.addOrderBy('comment.createdAt', 'DESC')
 
     if (userId) {
       qb.loadRelationCountAndMap(
@@ -101,7 +126,7 @@ export class UserResolver extends RepositoryInjector {
 
   @Query(returns => [Post])
   async userPosts(
-    @Args() { username, page, pageSize }: UserCommentsArgs,
+    @Args() { username, page, pageSize, sort, time, types }: UserPostsArgs,
     @Ctx() { userId }: Context,
   ) {
     const user = await this.userRepository
@@ -113,12 +138,43 @@ export class UserResolver extends RepositoryInjector {
 
     const qb = this.postRepository
       .createQueryBuilder('post')
-      .where('post.authorId = :id', { id: user.id })
       .leftJoinAndSelect('post.topics', 'topic')
-      .addOrderBy('post.createdAt', 'DESC')
+      .andWhere('post.authorId = :id', { id: user.id })
       .andWhere('post.deleted = false')
       .skip(page * pageSize)
       .take(pageSize)
+
+    if (types.length === 1) {
+      qb.andWhere(`post.type = '${types[0].toUpperCase()}'`)
+    } else if (types.length === 2) {
+      qb.andWhere(`post.type = ANY('{${types[0].toUpperCase()}, ${types[1].toUpperCase()}}')`)
+    }
+
+    if (sort === CommentSort.TOP) {
+      switch (time) {
+        case Time.HOUR:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 hour'")
+          break
+        case Time.DAY:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 day'")
+          break
+        case Time.WEEK:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 week'")
+          break
+        case Time.MONTH:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 month'")
+          break
+        case Time.YEAR:
+          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 year'")
+          break
+        case Time.ALL:
+          break
+        default:
+          break
+      }
+      qb.addOrderBy('post.endorsementCount', 'DESC')
+    }
+    qb.addOrderBy('post.createdAt', 'DESC')
 
     if (userId) {
       qb.loadRelationCountAndMap(

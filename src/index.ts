@@ -34,6 +34,7 @@ import { getRepository, getTreeRepository } from 'typeorm'
 // @ts-ignore
 import { avataaarEndpoint } from './avataaars/avataaarEndpoint'
 import { ProfilePicStorage } from './ProfilePicStorage'
+import { CommentSort } from './args/UserCommentsArgs'
 
 // register 3rd party IOC container
 TypeORM.useContainer(Container)
@@ -133,6 +134,10 @@ async function bootstrap() {
 
     registerEnumType(Type, {
       name: 'Type',
+    })
+
+    registerEnumType(CommentSort, {
+      name: 'CommentSort',
     })
 
     // build TypeGraphQL executable schema

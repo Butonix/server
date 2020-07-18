@@ -3,6 +3,7 @@ import {
   Args,
   Ctx,
   FieldResolver,
+  ID,
   Mutation,
   Query,
   Resolver,
@@ -23,7 +24,7 @@ import { TopicFeedArgs } from '../args/TopicFeedArgs'
 @Resolver(of => Topic)
 export class TopicResolver extends RepositoryInjector {
   @Query(returns => Topic, { nullable: true })
-  async topic(@Arg('topicName') topicName: string) {
+  async topic(@Arg('topicName', type => ID) topicName: string) {
     return this.topicRepository
       .createQueryBuilder('topic')
       .andWhere('topic.name ILIKE :topicName', { topicName })
@@ -94,7 +95,7 @@ export class TopicResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
-  async followTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
+  async followTopic(@Arg('topicName', type => ID) topicName: string, @Ctx() { userId }: Context) {
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
@@ -105,7 +106,7 @@ export class TopicResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
-  async unfollowTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
+  async unfollowTopic(@Arg('topicName', type => ID) topicName: string, @Ctx() { userId }: Context) {
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
@@ -116,7 +117,7 @@ export class TopicResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
-  async hideTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
+  async hideTopic(@Arg('topicName', type => ID) topicName: string, @Ctx() { userId }: Context) {
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followedTopics')
@@ -133,7 +134,7 @@ export class TopicResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(returns => Boolean)
-  async unhideTopic(@Arg('topicName') topicName: string, @Ctx() { userId }: Context) {
+  async unhideTopic(@Arg('topicName', type => ID) topicName: string, @Ctx() { userId }: Context) {
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'hiddenTopics')

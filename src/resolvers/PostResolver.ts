@@ -186,9 +186,7 @@ export class PostResolver extends RepositoryInjector {
     if (types.length === 1) {
       qb.andWhere(`post.type = '${types[0].toUpperCase()}'`)
     } else if (types.length === 2) {
-      qb.andWhere(
-        `post.type = '${types[0].toUpperCase()}' OR post.type = '${types[1].toUpperCase()}'`,
-      )
+      qb.andWhere(`post.type = ANY('{${types[0].toUpperCase()}, ${types[1].toUpperCase()}}')`)
     }
 
     if (sort === Sort.NEW) {

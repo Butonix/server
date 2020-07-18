@@ -18,7 +18,7 @@ import { Post } from './Post'
 @ObjectType()
 @Entity()
 export class Topic {
-  @Field()
+  @Field(type => ID)
   @PrimaryColumn()
   name: string
 
