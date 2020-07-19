@@ -22,6 +22,10 @@ export class Topic {
   @PrimaryColumn()
   name: string
 
+  @Field({ nullable: true })
+  @Column('text', { nullable: true })
+  description?: string
+
   @Column('int', { select: false, default: 0 })
   total: number
 

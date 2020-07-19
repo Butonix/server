@@ -34,7 +34,7 @@ export class User {
   @Column()
   createdAt: Date
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   lastLogin?: Date
 

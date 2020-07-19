@@ -16,9 +16,7 @@ import { RequiresAuth } from '../RequiresAuth'
 import { Comment } from '../entities/Comment'
 import { CommentSort, UserCommentsArgs } from '../args/UserCommentsArgs'
 import { RepositoryInjector } from '../RepositoryInjector'
-import { Post } from '../entities/Post'
-import { Sort, Time } from '../args/FeedArgs'
-import { UserPostsArgs } from '../args/UserPostsArgs'
+import { Time } from '../args/FeedArgs'
 
 @Resolver(of => User)
 export class UserResolver extends RepositoryInjector {
@@ -122,78 +120,6 @@ export class UserResolver extends RepositoryInjector {
     comments.forEach(comment => (comment.isEndorsed = Boolean(comment.personalEndorsementCount)))
 
     return comments
-  }
-
-  @Query(returns => [Post])
-  async userPosts(
-    @Args() { username, page, pageSize, sort, time, types }: UserPostsArgs,
-    @Ctx() { userId }: Context,
-  ) {
-    const user = await this.userRepository
-      .createQueryBuilder('user')
-      .where('user.username ILIKE :username', { username })
-      .getOne()
-
-    if (!user) return []
-
-    const qb = this.postRepository
-      .createQueryBuilder('post')
-      .leftJoinAndSelect('post.topics', 'topic')
-      .andWhere('post.authorId = :id', { id: user.id })
-      .andWhere('post.deleted = false')
-      .skip(page * pageSize)
-      .take(pageSize)
-
-    if (types.length === 1) {
-      qb.andWhere(`post.type = '${types[0].toUpperCase()}'`)
-    } else if (types.length === 2) {
-      qb.andWhere(`post.type = ANY('{${types[0].toUpperCase()}, ${types[1].toUpperCase()}}')`)
-    }
-
-    if (sort === CommentSort.TOP) {
-      switch (time) {
-        case Time.HOUR:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 hour'")
-          break
-        case Time.DAY:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 day'")
-          break
-        case Time.WEEK:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 week'")
-          break
-        case Time.MONTH:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 month'")
-          break
-        case Time.YEAR:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 year'")
-          break
-        case Time.ALL:
-          break
-        default:
-          break
-      }
-      qb.addOrderBy('post.endorsementCount', 'DESC')
-    }
-    qb.addOrderBy('post.createdAt', 'DESC')
-
-    if (userId) {
-      qb.loadRelationCountAndMap(
-        'post.personalEndorsementCount',
-        'post.endorsements',
-        'endorsement',
-        qb => {
-          return qb
-            .andWhere('endorsement.active = true')
-            .andWhere('endorsement.userId = :userId', { userId })
-        },
-      )
-    }
-
-    const posts = await qb.getMany()
-
-    posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
-
-    return posts
   }
 
   @UseMiddleware(RequiresAuth)

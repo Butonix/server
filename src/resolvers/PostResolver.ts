@@ -171,7 +171,7 @@ export class PostResolver extends RepositoryInjector {
 
   @Query(returns => [Post])
   async feed(
-    @Args() { page, pageSize, sort, time, filter, types, topicName }: FeedArgs,
+    @Args() { page, pageSize, sort, time, filter, types, topicName, username }: FeedArgs,
     @Ctx() { userId }: Context,
   ) {
     const qb = this.postRepository
@@ -183,10 +183,19 @@ export class PostResolver extends RepositoryInjector {
       qb.andWhere(':topicName ILIKE ANY(post.topicsarr)', { topicName })
     }
 
-    if (types.length === 1) {
-      qb.andWhere(`post.type = '${types[0].toUpperCase()}'`)
-    } else if (types.length === 2) {
-      qb.andWhere(`post.type = ANY('{${types[0].toUpperCase()}, ${types[1].toUpperCase()}}')`)
+    if (username) {
+      const user = await this.userRepository
+        .createQueryBuilder('user')
+        .where('user.username ILIKE :username', { username })
+        .getOne()
+
+      if (!user) return []
+
+      qb.andWhere('post.authorId = :id', { id: user.id })
+    }
+
+    if (types.length === 1 || types.length === 2) {
+      qb.andWhere('post.type = ANY(:types)', { types: types.map(type => type.toUpperCase()) })
     }
 
     if (sort === Sort.NEW) {
@@ -284,7 +293,10 @@ export class PostResolver extends RepositoryInjector {
       .leftJoinAndSelect('post.topics', 'topic')
       .getMany()
 
-    posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
+    posts.forEach(post => {
+      post.isEndorsed = Boolean(post.personalEndorsementCount)
+      post.isHidden = false
+    })
 
     return posts
   }
@@ -409,6 +421,8 @@ export class PostResolver extends RepositoryInjector {
         lastCommentCount: post.commentCount,
       } as PostView)
     }
+
+    this.userRepository.update(userId, { lastLogin: new Date() })
 
     return postView
   }

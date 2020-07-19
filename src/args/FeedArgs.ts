@@ -44,4 +44,7 @@ export class FeedArgs extends PaginationArgs {
 
   @Field({ nullable: true })
   topicName?: string
+
+  @Field({ nullable: true })
+  username?: string
 }

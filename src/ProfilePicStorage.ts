@@ -1,5 +1,4 @@
 import { StorageEngine } from 'multer'
-import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload'
 import { getUser } from './auth'
 import shortid from 'shortid'
 import sharp from 'sharp'
@@ -67,7 +66,7 @@ export class ProfilePicStorage implements StorageEngine {
         // @ts-ignore
         key,
         // @ts-ignore
-        location: result.Location.replace('s3.amazonaws.com/', ''),
+        location: result.Location.replace('s3.amazonaws.com/', '') + '?rand=' + shortid.generate(),
       })
     })
   }
