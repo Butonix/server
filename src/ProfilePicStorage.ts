@@ -12,7 +12,10 @@ export class ProfilePicStorage implements StorageEngine {
   async _handleFile(
     req: Express.Request,
     file: any,
-    callback: (error?: Error | null, info?: Partial<Express.Multer.File>) => void,
+    callback: (
+      error?: Error | null,
+      info?: Partial<Express.Multer.File>
+    ) => void
   ): Promise<void> {
     const userId = getUser(req)
     if (!userId) {
@@ -34,7 +37,9 @@ export class ProfilePicStorage implements StorageEngine {
       }
     }
 
-    await getRepository(User).update(userId, { lastUploadedImageAt: new Date() })
+    await getRepository(User).update(userId, {
+      lastUploadedImageAt: new Date()
+    })
 
     const transformer = sharp()
       .resize(150, 150, { fit: 'cover' })
@@ -51,7 +56,7 @@ export class ProfilePicStorage implements StorageEngine {
       Key: key,
       Body: outStream,
       ContentType: file.mimetype,
-      ACL: 'public-read',
+      ACL: 'public-read'
     })
 
     upload.send((err, result) => {
@@ -66,7 +71,10 @@ export class ProfilePicStorage implements StorageEngine {
         // @ts-ignore
         key,
         // @ts-ignore
-        location: result.Location.replace('s3.amazonaws.com/', '') + '?rand=' + shortid.generate(),
+        location:
+          result.Location.replace('s3.amazonaws.com/', '') +
+          '?rand=' +
+          shortid.generate()
       })
     })
   }
@@ -74,7 +82,7 @@ export class ProfilePicStorage implements StorageEngine {
   _removeFile(
     req: Express.Request,
     file: Express.Multer.File,
-    callback: (error?: Error | null) => void,
+    callback: (error?: Error | null) => void
   ): void {
     const userId = getUser(req)
     if (!userId) {

@@ -15,12 +15,20 @@ import { SignUpArgs } from '../args/SignUpArgs'
 export class AuthResolver {
   @InjectRepository(User) readonly userRepository: Repository<User>
 
-  @Mutation(returns => LoginResponse)
-  async signUp(@Args() { username, password, email }: SignUpArgs, @Ctx() { req, res }: Context) {
-    if (username.toLowerCase() === 'null' || username.toLowerCase() === 'undefined')
+  @Mutation((returns) => LoginResponse)
+  async signUp(
+    @Args() { username, password, email }: SignUpArgs,
+    @Ctx() { req, res }: Context
+  ) {
+    if (
+      username.toLowerCase() === 'null' ||
+      username.toLowerCase() === 'undefined'
+    )
       throw new Error('Invalid username')
 
-    const foundUser = await this.userRepository.findOne({ where: `"username" ILIKE '${username}'` })
+    const foundUser = await this.userRepository.findOne({
+      where: `"username" ILIKE '${username}'`
+    })
     if (foundUser) throw new Error('Username taken')
 
     const passwordHash = await argon2.hash(password)
@@ -31,18 +39,23 @@ export class AuthResolver {
       passwordHash,
       bio: 'New Comet user',
       createdAt: new Date(),
-      lastLogin: new Date(),
+      lastLogin: new Date()
     } as User)
 
     return {
       accessToken: createAccessToken(user),
-      user,
+      user
     } as LoginResponse
   }
 
-  @Mutation(returns => LoginResponse)
-  async login(@Args() { username, password }: LoginArgs, @Ctx() { req, res }: Context) {
-    const user = await this.userRepository.findOne({ where: `"username" ILIKE '${username}'` })
+  @Mutation((returns) => LoginResponse)
+  async login(
+    @Args() { username, password }: LoginArgs,
+    @Ctx() { req, res }: Context
+  ) {
+    const user = await this.userRepository.findOne({
+      where: `"username" ILIKE '${username}'`
+    })
     if (!user) throw new Error('Invalid Login')
 
     if (user.banned) throw new Error('Banned: ' + user.banReason)
@@ -60,16 +73,16 @@ export class AuthResolver {
 
     return {
       accessToken: createAccessToken(user),
-      user,
+      user
     } as LoginResponse
   }
 
-  @Mutation(returns => LoginResponse)
+  @Mutation((returns) => LoginResponse)
   @UseMiddleware(RequiresAuth)
   async changePassword(
     @Arg('oldPassword') oldPassword: string,
     @Arg('newPassword') newPassword: string,
-    @Ctx() { userId }: Context,
+    @Ctx() { userId }: Context
   ) {
     const user = await this.userRepository.findOne(userId)
     const match = await argon2.verify(user.passwordHash, oldPassword)
@@ -85,7 +98,7 @@ export class AuthResolver {
 
     return {
       accessToken: createAccessToken(user),
-      user,
+      user
     } as LoginResponse
   }
 }

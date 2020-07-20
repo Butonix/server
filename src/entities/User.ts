@@ -1,5 +1,12 @@
 import { Field, ID, ObjectType } from 'type-graphql'
-import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn
+} from 'typeorm'
 import { Comment } from './Comment'
 import { Lazy } from '../lazy'
 import { Post } from './Post'
@@ -11,7 +18,7 @@ import { PostView } from './PostView'
 @ObjectType()
 @Entity()
 export class User {
-  @Field(type => ID)
+  @Field((type) => ID)
   @PrimaryGeneratedColumn('uuid')
   readonly id: string
 
@@ -52,55 +59,55 @@ export class User {
   banReason?: string
 
   @OneToMany(
-    type => Comment,
-    comment => comment.author,
+    (type) => Comment,
+    (comment) => comment.author
   )
   comments: Lazy<Comment[]>
 
   @OneToMany(
-    type => Post,
-    post => post.author,
+    (type) => Post,
+    (post) => post.author
   )
   posts: Lazy<Post[]>
 
-  @Field(type => [Topic])
+  @Field((type) => [Topic])
   @ManyToMany(
-    type => Topic,
-    topic => topic.followers,
+    (type) => Topic,
+    (topic) => topic.followers
   )
   followedTopics: Lazy<Topic[]>
 
-  @ManyToMany(type => Topic)
+  @ManyToMany((type) => Topic)
   @JoinTable()
   hiddenTopics: Lazy<Topic[]>
 
-  @ManyToMany(type => Post)
+  @ManyToMany((type) => Post)
   @JoinTable()
   hiddenPosts: Lazy<Post[]>
 
   @ManyToMany(
-    type => User,
-    user => user.following,
+    (type) => User,
+    (user) => user.following
   )
   @JoinTable()
   followers: Lazy<User[]>
 
   @ManyToMany(
-    type => User,
-    user => user.followers,
+    (type) => User,
+    (user) => user.followers
   )
   following: Lazy<User[]>
 
   @ManyToMany(
-    type => User,
-    user => user.blockedUsers,
+    (type) => User,
+    (user) => user.blockedUsers
   )
   @JoinTable()
   blockedBy: Lazy<User[]>
 
   @ManyToMany(
-    type => User,
-    user => user.blockedBy,
+    (type) => User,
+    (user) => user.blockedBy
   )
   blockedUsers: Lazy<User[]>
 
@@ -123,14 +130,14 @@ export class User {
   postCount: number
 
   @OneToMany(
-    type => PostEndorsement,
-    endorsement => endorsement.user,
+    (type) => PostEndorsement,
+    (endorsement) => endorsement.user
   )
   postEndorsements: Lazy<PostEndorsement[]>
 
   @OneToMany(
-    type => CommentEndorsement,
-    endorsement => endorsement.user,
+    (type) => CommentEndorsement,
+    (endorsement) => endorsement.user
   )
   commentEndorsements: Lazy<CommentEndorsement[]>
 
@@ -156,8 +163,8 @@ export class User {
   tagColor?: string
 
   @OneToMany(
-    type => PostView,
-    postView => postView.user,
+    (type) => PostView,
+    (postView) => postView.user
   )
   postViews: Lazy<PostView[]>
 

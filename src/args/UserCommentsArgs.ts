@@ -5,7 +5,7 @@ import { Time } from './FeedArgs'
 
 export enum CommentSort {
   NEW = 'new',
-  TOP = 'top',
+  TOP = 'top'
 }
 
 @ArgsType()
@@ -14,9 +14,9 @@ export class UserCommentsArgs extends PaginationArgs {
   @Length(3, 20)
   username: string
 
-  @Field(type => CommentSort, { defaultValue: CommentSort.NEW })
+  @Field((type) => CommentSort, { defaultValue: CommentSort.NEW })
   sort: CommentSort = CommentSort.NEW
 
-  @Field(type => Time, { defaultValue: Time.ALL })
+  @Field((type) => Time, { defaultValue: Time.ALL })
   time: Time = Time.ALL
 }

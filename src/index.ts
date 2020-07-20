@@ -11,7 +11,12 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import { ApolloServer } from 'apollo-server-express'
 import { Context } from './Context'
-import { CommentLoader, PostLoader, PostViewLoader, UserLoader } from './loaders'
+import {
+  CommentLoader,
+  PostLoader,
+  PostViewLoader,
+  UserLoader
+} from './loaders'
 import { Post, PostType } from './entities/Post'
 import { AuthResolver } from './resolvers/AuthResolver'
 import { PostResolver } from './resolvers/PostResolver'
@@ -41,7 +46,7 @@ TypeORM.useContainer(Container)
 
 aws.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY,
-  secretAccessKey: process.env.AWS_SECRET_KEY,
+  secretAccessKey: process.env.AWS_SECRET_KEY
 })
 
 let generateFakeData = false
@@ -65,7 +70,7 @@ async function bootstrap() {
     CommentEndorsement,
     Topic,
     PostView,
-    ReplyNotification,
+    ReplyNotification
   ]
   const resolvers = [
     PostResolver,
@@ -74,7 +79,7 @@ async function bootstrap() {
     TopicResolver,
     CommentResolver,
     FiltersResolver,
-    NotificationResolver,
+    NotificationResolver
   ]
 
   try {
@@ -91,7 +96,7 @@ async function bootstrap() {
         synchronize: true,
         logging: true,
         dropSchema: generateFakeData, // CLEARS DATABASE ON START
-        cache: true,
+        cache: true
       })
     } else if (process.env.NODE_ENV === 'production' && !process.env.STAGING) {
       // PROD
@@ -101,9 +106,12 @@ async function bootstrap() {
         entities,
         synchronize: true,
         logging: false,
-        cache: true,
+        cache: true
       })
-    } else if (process.env.NODE_ENV === 'production' && process.env.STAGING === 'true') {
+    } else if (
+      process.env.NODE_ENV === 'production' &&
+      process.env.STAGING === 'true'
+    ) {
       // STAGING
       await TypeORM.createConnection({
         type: 'postgres',
@@ -112,32 +120,32 @@ async function bootstrap() {
         synchronize: true,
         logging: false,
         dropSchema: true, // CLEARS DATABASE ON START
-        cache: true,
+        cache: true
       })
     } else return
 
     registerEnumType(PostType, {
-      name: 'PostType',
+      name: 'PostType'
     })
 
     registerEnumType(Sort, {
-      name: 'Sort',
+      name: 'Sort'
     })
 
     registerEnumType(Time, {
-      name: 'Time',
+      name: 'Time'
     })
 
     registerEnumType(Filter, {
-      name: 'Filter',
+      name: 'Filter'
     })
 
     registerEnumType(Type, {
-      name: 'Type',
+      name: 'Type'
     })
 
     registerEnumType(CommentSort, {
-      name: 'CommentSort',
+      name: 'CommentSort'
     })
 
     // build TypeGraphQL executable schema
@@ -148,18 +156,19 @@ async function bootstrap() {
           ? undefined
           : path.resolve(__dirname, 'schema.graphql'),
       container: Container,
-      validate: true,
+      validate: true
     })
 
     const app = express()
 
-    const origin = process.env.NODE_ENV === 'production' ? process.env.ORIGIN_URL : true
+    const origin =
+      process.env.NODE_ENV === 'production' ? process.env.ORIGIN_URL : true
 
     app.use(
       cors({
         origin,
-        credentials: true,
-      }),
+        credentials: true
+      })
     )
 
     app.use(cookieParser())
@@ -176,17 +185,17 @@ async function bootstrap() {
           userLoader: UserLoader,
           postLoader: PostLoader,
           commentLoader: CommentLoader,
-          postViewLoader: PostViewLoader,
+          postViewLoader: PostViewLoader
         } as Context
-      },
+      }
     })
 
     server.applyMiddleware({
       app,
       cors: {
         origin,
-        credentials: true,
-      },
+        credentials: true
+      }
     })
 
     const upload = multer({
@@ -198,9 +207,9 @@ async function bootstrap() {
         }
       },
       limits: {
-        fileSize: 4 * 1024 * 1024,
+        fileSize: 4 * 1024 * 1024
       },
-      storage: new ImageStorage(),
+      storage: new ImageStorage()
     })
 
     const imageUpload = upload.single('image')
@@ -219,7 +228,7 @@ async function bootstrap() {
       },
       (err: any, req: any, res: any, next: any) => {
         res.send({ error: err.message })
-      },
+      }
     )
 
     const uploadProfilePic = multer({
@@ -231,9 +240,9 @@ async function bootstrap() {
         }
       },
       limits: {
-        fileSize: 4 * 1024 * 1024,
+        fileSize: 4 * 1024 * 1024
       },
-      storage: new ProfilePicStorage(),
+      storage: new ProfilePicStorage()
     })
 
     const profilePicUpload = uploadProfilePic.single('image')
@@ -252,7 +261,7 @@ async function bootstrap() {
       },
       (err: any, req: any, res: any, next: any) => {
         res.send({ error: err.message })
-      },
+      }
     )
 
     app.get('/avataaar', avataaarEndpoint)
@@ -262,7 +271,8 @@ async function bootstrap() {
     })
 
     if (
-      (process.env.NODE_ENV !== 'production' || process.env.STAGING === 'true') &&
+      (process.env.NODE_ENV !== 'production' ||
+        process.env.STAGING === 'true') &&
       generateFakeData
     ) {
       await new FakeDataGenerator().generateFakeData(
@@ -270,7 +280,7 @@ async function bootstrap() {
         getRepository(User),
         getRepository(Post),
         getRepository(Topic),
-        getTreeRepository(Comment),
+        getTreeRepository(Comment)
       )
     }
   } catch (e) {

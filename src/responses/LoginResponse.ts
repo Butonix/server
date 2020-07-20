@@ -3,7 +3,7 @@ import { User } from '../entities/User'
 
 @ObjectType()
 export class LoginResponse {
-  @Field(type => User)
+  @Field((type) => User)
   user: User
 
   @Field()

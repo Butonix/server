@@ -16,9 +16,12 @@ export class FakeDataGenerator {
     userRepository: Repository<User>,
     postRepository: Repository<Post>,
     topicRepository: Repository<Topic>,
-    commentRepository: TreeRepository<Comment>,
+    commentRepository: TreeRepository<Comment>
   ) {
-    if (process.env.NODE_ENV !== 'production' || process.env.STAGING === 'true') {
+    if (
+      process.env.NODE_ENV !== 'production' ||
+      process.env.STAGING === 'true'
+    ) {
       const usersToSave: User[] = []
       const postsToSave: Post[] = []
       let topicsToSave: any[] = []
@@ -30,7 +33,7 @@ export class FakeDataGenerator {
           username: faker.internet.userName(),
           createdAt: faker.date.recent(),
           profilePicUrl: randomAvataaarUrl(),
-          passwordHash,
+          passwordHash
         })
         usersToSave.push(user)
 
@@ -60,7 +63,7 @@ export class FakeDataGenerator {
           topicsarr.push(faker.random.word().toLowerCase())
         }
 
-        const topics = topicsarr.map(t => ({ name: t } as Topic))
+        const topics = topicsarr.map((t) => ({ name: t } as Topic))
         topicsToSave.push(...topics)
 
         const post = await postRepository.create({
@@ -74,7 +77,7 @@ export class FakeDataGenerator {
           createdAt: faker.date.recent(),
           topics,
           topicsarr,
-          thumbnailUrl,
+          thumbnailUrl
         })
         postsToSave.push(post)
 
@@ -84,19 +87,22 @@ export class FakeDataGenerator {
             postId: post.id,
             authorId: user.id,
             textContent: faker.lorem.paragraphs(2),
-            createdAt: faker.date.recent(),
+            createdAt: faker.date.recent()
           })
           commentsToSave.push(comment)
         }
       }
       await userRepository.save(usersToSave)
       topicsToSave = topicsToSave.filter(
-        (topic, index, self) => index === self.findIndex(t => t.name === topic.name),
+        (topic, index, self) =>
+          index === self.findIndex((t) => t.name === topic.name)
       )
       await topicRepository.save(topicsToSave)
       await postRepository.save(postsToSave)
       await commentRepository.save(commentsToSave)
     } else
-      throw new Error('generateFakeData can only be used in development and staging environments.')
+      throw new Error(
+        'generateFakeData can only be used in development and staging environments.'
+      )
   }
 }

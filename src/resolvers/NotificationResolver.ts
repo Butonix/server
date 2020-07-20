@@ -1,15 +1,23 @@
 import { RepositoryInjector } from '../RepositoryInjector'
-import { Arg, Ctx, ID, Mutation, Query, Resolver, UseMiddleware } from 'type-graphql'
+import {
+  Arg,
+  Ctx,
+  ID,
+  Mutation,
+  Query,
+  Resolver,
+  UseMiddleware
+} from 'type-graphql'
 import { RequiresAuth } from '../RequiresAuth'
 import { ReplyNotification } from '../entities/ReplyNotification'
 import { Context } from '../Context'
 
 @Resolver()
 export class NotificationResolver extends RepositoryInjector {
-  @Query(returns => [ReplyNotification])
+  @Query((returns) => [ReplyNotification])
   async notifications(
     @Arg('unreadOnly', { defaultValue: false }) unreadOnly: boolean,
-    @Ctx() { userId }: Context,
+    @Ctx() { userId }: Context
   ) {
     if (!userId) return []
 
@@ -17,7 +25,11 @@ export class NotificationResolver extends RepositoryInjector {
       .createQueryBuilder('notification')
       .leftJoinAndSelect('notification.fromUser', 'fromUser')
       .leftJoinAndSelect('notification.post', 'post')
-      .leftJoinAndSelect('notification.comment', 'comment', 'comment.deleted = false')
+      .leftJoinAndSelect(
+        'notification.comment',
+        'comment',
+        'comment.deleted = false'
+      )
       .addOrderBy('notification.createdAt', 'DESC')
       .andWhere('notification.toUserId = :userId', { userId })
 
@@ -25,12 +37,17 @@ export class NotificationResolver extends RepositoryInjector {
 
     const notifications = await qb.getMany()
 
-    return notifications.filter(notif => notif.comment !== null && notif.comment !== undefined)
+    return notifications.filter(
+      (notif) => notif.comment !== null && notif.comment !== undefined
+    )
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async markNotificationRead(@Arg('id', type => ID) id: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async markNotificationRead(
+    @Arg('id', (type) => ID) id: string,
+    @Ctx() { userId }: Context
+  ) {
     await this.replyNotifRepository
       .createQueryBuilder()
       .update()
@@ -42,7 +59,7 @@ export class NotificationResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
+  @Mutation((returns) => Boolean)
   async markAllNotificationsRead(@Ctx() { userId }: Context) {
     await this.replyNotifRepository
       .createQueryBuilder()

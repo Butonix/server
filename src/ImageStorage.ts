@@ -13,7 +13,10 @@ export class ImageStorage implements StorageEngine {
   async _handleFile(
     req: Express.Request,
     file: any,
-    callback: (error?: Error | null, info?: Partial<Express.Multer.File>) => void,
+    callback: (
+      error?: Error | null,
+      info?: Partial<Express.Multer.File>
+    ) => void
   ): Promise<void> {
     const userId = getUser(req)
     if (!userId) {
@@ -35,7 +38,9 @@ export class ImageStorage implements StorageEngine {
       }
     }
 
-    await getRepository(User).update(userId, { lastUploadedImageAt: new Date() })
+    await getRepository(User).update(userId, {
+      lastUploadedImageAt: new Date()
+    })
 
     const key = `${shortid.generate()}.png`
 
@@ -44,7 +49,7 @@ export class ImageStorage implements StorageEngine {
       Key: key,
       Body: file.stream,
       ContentType: file.mimetype,
-      ACL: 'public-read',
+      ACL: 'public-read'
     })
 
     upload.send((err, result) => {
@@ -59,7 +64,7 @@ export class ImageStorage implements StorageEngine {
         // @ts-ignore
         key,
         // @ts-ignore
-        location: result.Location.replace('s3.amazonaws.com/', ''),
+        location: result.Location.replace('s3.amazonaws.com/', '')
       })
     })
   }
@@ -67,7 +72,7 @@ export class ImageStorage implements StorageEngine {
   _removeFile(
     req: Express.Request,
     file: Express.Multer.File,
-    callback: (error?: Error | null) => void,
+    callback: (error?: Error | null) => void
   ): void {
     const userId = getUser(req)
     if (!userId) {

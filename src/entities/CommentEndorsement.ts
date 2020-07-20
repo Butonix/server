@@ -7,7 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryColumn,
-  PrimaryGeneratedColumn,
+  PrimaryGeneratedColumn
 } from 'typeorm'
 import { Comment } from './Comment'
 import { Lazy } from '../lazy'
@@ -18,22 +18,22 @@ import { Post } from './Post'
 @Entity()
 export class CommentEndorsement {
   @ManyToOne(
-    type => User,
-    user => user.posts,
+    (type) => User,
+    (user) => user.posts
   )
   user: Lazy<User>
 
-  @Field(type => ID)
+  @Field((type) => ID)
   @PrimaryColumn()
   userId: string
 
   @ManyToOne(
-    type => Comment,
-    comment => comment.endorsements,
+    (type) => Comment,
+    (comment) => comment.endorsements
   )
   comment: Lazy<Comment>
 
-  @Field(type => ID)
+  @Field((type) => ID)
   @PrimaryColumn()
   commentId: string
 

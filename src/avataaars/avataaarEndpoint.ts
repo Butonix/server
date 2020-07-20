@@ -11,7 +11,7 @@ export const avataaarEndpoint = async (req: any, res: any) => {
 
   res.writeHead(200, {
     'Content-Type': 'image/svg+xml',
-    'Cache-Control': 'max-age=31536000',
+    'Cache-Control': 'max-age=31536000'
   })
   res.end(appString)
 }

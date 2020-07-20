@@ -6,7 +6,7 @@ import {
   ArrayMinSize,
   ArrayUnique,
   Matches,
-  IsOptional,
+  IsOptional
 } from 'class-validator'
 
 @ArgsType()
@@ -15,7 +15,7 @@ export class SubmitPostArgs {
   @Length(1, 300)
   title: string
 
-  @Field(type => PostType)
+  @Field((type) => PostType)
   type: PostType
 
   @Field({ nullable: true })
@@ -28,7 +28,7 @@ export class SubmitPostArgs {
   @Length(1, 40000)
   textContent?: string
 
-  @Field(type => [String])
+  @Field((type) => [String])
   @ArrayMaxSize(10)
   @ArrayMinSize(1)
   @ArrayUnique()

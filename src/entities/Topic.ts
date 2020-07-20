@@ -7,7 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryColumn,
-  PrimaryGeneratedColumn,
+  PrimaryGeneratedColumn
 } from 'typeorm'
 import { Comment } from './Comment'
 import { Lazy } from '../lazy'
@@ -18,7 +18,7 @@ import { Post } from './Post'
 @ObjectType()
 @Entity()
 export class Topic {
-  @Field(type => ID)
+  @Field((type) => ID)
   @PrimaryColumn()
   name: string
 
@@ -33,15 +33,15 @@ export class Topic {
   total: number
 
   @ManyToMany(
-    type => Post,
-    post => post.topics,
+    (type) => Post,
+    (post) => post.topics
   )
   @JoinTable()
   posts: Lazy<Post[]>
 
   @ManyToMany(
-    type => User,
-    user => user.followedTopics,
+    (type) => User,
+    (user) => user.followedTopics
   )
   @JoinTable()
   followers: Lazy<User[]>

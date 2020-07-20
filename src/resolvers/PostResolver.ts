@@ -8,7 +8,7 @@ import {
   Query,
   Resolver,
   Root,
-  UseMiddleware,
+  UseMiddleware
 } from 'type-graphql'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Post, PostType } from '../entities/Post'
@@ -40,9 +40,9 @@ import isUrl from 'is-url'
 import xss from 'xss'
 import { whiteList } from '../xssWhiteList'
 
-@Resolver(of => Post)
+@Resolver((of) => Post)
 export class PostResolver extends RepositoryInjector {
-  @Query(returns => String)
+  @Query((returns) => String)
   async getTitleAtUrl(@Arg('url') url: string) {
     if (!isUrl(url)) return ''
     let result = ''
@@ -59,7 +59,7 @@ export class PostResolver extends RepositoryInjector {
           } else {
             reject(error)
           }
-        }),
+        })
       )
     } catch (e) {
       result = ''
@@ -68,18 +68,27 @@ export class PostResolver extends RepositoryInjector {
     return result
   }
 
-  @Query(returns => [Post])
+  @Query((returns) => [Post])
   async searchPosts(
     @Args() { page, pageSize, search, sort, time }: SearchPostsArgs,
-    @Ctx() { userId }: Context,
+    @Ctx() { userId }: Context
   ) {
     if (!search) return []
 
     const qb = this.postRepository
       .createQueryBuilder('post')
-      .addSelect('ts_rank_cd(to_tsvector(post.textContent), plainto_tsquery(:query))', 'textrank')
-      .addSelect('ts_rank_cd(to_tsvector(post.link), plainto_tsquery(:query))', 'linkrank')
-      .addSelect('ts_rank_cd(to_tsvector(post.title), plainto_tsquery(:query))', 'titlerank')
+      .addSelect(
+        'ts_rank_cd(to_tsvector(post.textContent), plainto_tsquery(:query))',
+        'textrank'
+      )
+      .addSelect(
+        'ts_rank_cd(to_tsvector(post.link), plainto_tsquery(:query))',
+        'linkrank'
+      )
+      .addSelect(
+        'ts_rank_cd(to_tsvector(post.title), plainto_tsquery(:query))',
+        'titlerank'
+      )
       .orderBy('titlerank', 'DESC')
       .addOrderBy('textrank', 'DESC')
       .addOrderBy('linkrank', 'DESC')
@@ -122,11 +131,11 @@ export class PostResolver extends RepositoryInjector {
           .relation(User, 'hiddenTopics')
           .of(userId)
           .loadMany()
-      ).map(topic => topic.name)
+      ).map((topic) => topic.name)
 
       if (hiddenTopics.length > 0) {
         qb.andWhere(
-          'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0',
+          'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0'
         ).setParameter('hiddenTopics', hiddenTopics)
       }
 
@@ -136,7 +145,7 @@ export class PostResolver extends RepositoryInjector {
           .relation(User, 'blockedUsers')
           .of(userId)
           .loadMany()
-      ).map(user => user.id)
+      ).map((user) => user.id)
 
       qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
 
@@ -146,7 +155,7 @@ export class PostResolver extends RepositoryInjector {
           .relation(User, 'hiddenPosts')
           .of(userId)
           .loadMany()
-      ).map(post => post.id)
+      ).map((post) => post.id)
 
       qb.andWhere('NOT (post.id = ANY(:hiddenPosts))', { hiddenPosts })
 
@@ -154,25 +163,37 @@ export class PostResolver extends RepositoryInjector {
         'post.personalEndorsementCount',
         'post.endorsements',
         'endorsement',
-        qb => {
+        (qb) => {
           return qb
             .andWhere('endorsement.active = true')
             .andWhere('endorsement.userId = :userId', { userId })
-        },
+        }
       )
     }
 
     const posts = await qb.leftJoinAndSelect('post.topics', 'topic').getMany()
 
-    posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
+    posts.forEach(
+      (post) => (post.isEndorsed = Boolean(post.personalEndorsementCount))
+    )
 
     return posts
   }
 
-  @Query(returns => [Post])
+  @Query((returns) => [Post])
   async feed(
-    @Args() { page, pageSize, sort, time, filter, types, topicName, username }: FeedArgs,
-    @Ctx() { userId }: Context,
+    @Args()
+    {
+      page,
+      pageSize,
+      sort,
+      time,
+      filter,
+      types,
+      topicName,
+      username
+    }: FeedArgs,
+    @Ctx() { userId }: Context
   ) {
     const qb = this.postRepository
       .createQueryBuilder('post')
@@ -195,7 +216,9 @@ export class PostResolver extends RepositoryInjector {
     }
 
     if (types.length === 1 || types.length === 2) {
-      qb.andWhere('post.type = ANY(:types)', { types: types.map(type => type.toUpperCase()) })
+      qb.andWhere('post.type = ANY(:types)', {
+        types: types.map((type) => type.toUpperCase())
+      })
     }
 
     if (sort === Sort.NEW) {
@@ -203,7 +226,7 @@ export class PostResolver extends RepositoryInjector {
     } else if (sort === Sort.HOT) {
       qb.addSelect(
         '(CAST(post.endorsementCount AS float) + 1)/((CAST((CAST(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS int) - CAST(EXTRACT(EPOCH FROM post.createdAt) AS int)+100000) AS FLOAT)/6.0)^(1.0/3.0))',
-        'post_hotrank',
+        'post_hotrank'
       )
       qb.addOrderBy('post_hotrank', 'DESC')
     } else if (sort === Sort.TOP || sort === Sort.COMMENTS) {
@@ -247,16 +270,20 @@ export class PostResolver extends RepositoryInjector {
         .getOne()
 
       if (user) {
-        const hiddenTopics = (await user.hiddenTopics).map(topic => topic.name)
-        const blockedUsers = (await user.blockedUsers).map(user => user.id)
-        const hiddenPosts = (await user.hiddenPosts).map(post => post.id)
+        const hiddenTopics = (await user.hiddenTopics).map(
+          (topic) => topic.name
+        )
+        const blockedUsers = (await user.blockedUsers).map((user) => user.id)
+        const hiddenPosts = (await user.hiddenPosts).map((post) => post.id)
 
         if (!topicName) {
           if (filter === Filter.MYTOPICS) {
-            const followedTopics = (await user.followedTopics).map(topic => topic.name)
+            const followedTopics = (await user.followedTopics).map(
+              (topic) => topic.name
+            )
             if (followedTopics.length > 0) {
               qb.andWhere(
-                'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:followedTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) > 0',
+                'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:followedTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) > 0'
               ).setParameter('followedTopics', followedTopics)
             } else {
               return []
@@ -266,11 +293,13 @@ export class PostResolver extends RepositoryInjector {
 
         if (hiddenTopics.length > 0) {
           qb.andWhere(
-            'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0',
+            'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0'
           ).setParameter('hiddenTopics', hiddenTopics)
         }
 
-        qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
+        qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', {
+          blockedUsers
+        })
 
         qb.andWhere('NOT (post.id = ANY(:hiddenPosts))', { hiddenPosts })
 
@@ -278,11 +307,11 @@ export class PostResolver extends RepositoryInjector {
           'post.personalEndorsementCount',
           'post.endorsements',
           'endorsement',
-          qb => {
+          (qb) => {
             return qb
               .andWhere('endorsement.active = true')
               .andWhere('endorsement.userId = :userId', { userId })
-          },
+          }
         )
       }
     }
@@ -293,7 +322,7 @@ export class PostResolver extends RepositoryInjector {
       .leftJoinAndSelect('post.topics', 'topic')
       .getMany()
 
-    posts.forEach(post => {
+    posts.forEach((post) => {
       post.isEndorsed = Boolean(post.personalEndorsementCount)
       post.isHidden = false
     })
@@ -301,7 +330,7 @@ export class PostResolver extends RepositoryInjector {
     return posts
   }
 
-  @Query(returns => [Post])
+  @Query((returns) => [Post])
   async hiddenPosts(@Ctx() { userId }: Context) {
     if (!userId) return []
 
@@ -313,22 +342,24 @@ export class PostResolver extends RepositoryInjector {
 
     if (posts.length === 0) return []
 
-    const qb = this.postRepository.createQueryBuilder('post').whereInIds(posts.map(post => post.id))
+    const qb = this.postRepository
+      .createQueryBuilder('post')
+      .whereInIds(posts.map((post) => post.id))
 
     qb.loadRelationCountAndMap(
       'post.personalEndorsementCount',
       'post.endorsements',
       'endorsement',
-      qb => {
+      (qb) => {
         return qb
           .andWhere('endorsement.active = true')
           .andWhere('endorsement.userId = :userId', { userId })
-      },
+      }
     )
 
     posts = await qb.leftJoinAndSelect('post.topics', 'topic').getMany()
 
-    posts.forEach(post => {
+    posts.forEach((post) => {
       post.isEndorsed = Boolean(post.personalEndorsementCount)
       post.isHidden = true
     })
@@ -336,7 +367,7 @@ export class PostResolver extends RepositoryInjector {
     return posts
   }
 
-  @Query(returns => [Post])
+  @Query((returns) => [Post])
   async globalStickies(@Ctx() { userId }: Context) {
     const qb = this.postRepository
       .createQueryBuilder('post')
@@ -348,35 +379,42 @@ export class PostResolver extends RepositoryInjector {
         'post.personalEndorsementCount',
         'post.endorsements',
         'endorsement',
-        qb => {
+        (qb) => {
           return qb
             .andWhere('endorsement.active = true')
             .andWhere('endorsement.userId = :userId', { userId })
-        },
+        }
       )
     }
 
     const posts = await qb.getMany()
 
-    posts.forEach(post => (post.isEndorsed = Boolean(post.personalEndorsementCount)))
+    posts.forEach(
+      (post) => (post.isEndorsed = Boolean(post.personalEndorsementCount))
+    )
 
     return posts
   }
 
-  @Query(returns => Post, { nullable: true })
-  async post(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
-    const qb = this.postRepository.createQueryBuilder('post').where('post.id = :postId', { postId })
+  @Query((returns) => Post, { nullable: true })
+  async post(
+    @Arg('postId', (type) => ID) postId: string,
+    @Ctx() { userId }: Context
+  ) {
+    const qb = this.postRepository
+      .createQueryBuilder('post')
+      .where('post.id = :postId', { postId })
 
     if (userId) {
       qb.loadRelationCountAndMap(
         'post.personalEndorsementCount',
         'post.endorsements',
         'endorsement',
-        qb => {
+        (qb) => {
           return qb
             .andWhere('endorsement.active = true')
             .andWhere('endorsement.userId = :userId', { userId })
-        },
+        }
       )
     }
 
@@ -395,8 +433,11 @@ export class PostResolver extends RepositoryInjector {
     return post
   }
 
-  @Mutation(returns => PostView, { nullable: true })
-  async recordPostView(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => PostView, { nullable: true })
+  async recordPostView(
+    @Arg('postId', (type) => ID) postId: string,
+    @Ctx() { userId }: Context
+  ) {
     if (!userId) return null
 
     let postView = await this.postViewRepository.findOne({ postId, userId })
@@ -411,14 +452,14 @@ export class PostResolver extends RepositoryInjector {
     if (postView) {
       await this.postViewRepository.update({ userId, postId }, {
         createdAt: new Date(),
-        lastCommentCount: post.commentCount,
+        lastCommentCount: post.commentCount
       } as PostView)
     } else {
       postView = await this.postViewRepository.save({
         createdAt: new Date(),
         userId,
         postId,
-        lastCommentCount: post.commentCount,
+        lastCommentCount: post.commentCount
       } as PostView)
     }
 
@@ -428,10 +469,10 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Post)
+  @Mutation((returns) => Post)
   async submitPost(
     @Args() { title, type, link, textContent, topics }: SubmitPostArgs,
-    @Ctx() { userId }: Context,
+    @Ctx() { userId }: Context
   ) {
     const user = await this.userRepository.findOne(userId)
 
@@ -455,12 +496,12 @@ export class PostResolver extends RepositoryInjector {
       if (isImageUrl(link)) {
         parseResult = {
           // eslint-disable-next-line @typescript-eslint/camelcase
-          lead_image_url: link,
+          lead_image_url: link
         }
         type = PostType.IMAGE
       } else {
         const longTask = () =>
-          new Promise(async resolve => {
+          new Promise(async (resolve) => {
             try {
               resolve(await Mercury.parse(link))
             } catch (e) {
@@ -469,11 +510,11 @@ export class PostResolver extends RepositoryInjector {
           })
 
         const timeout = (cb: any, interval: number) => () =>
-          new Promise(resolve => setTimeout(() => cb(resolve), interval))
+          new Promise((resolve) => setTimeout(() => cb(resolve), interval))
 
         const onTimeout = timeout((resolve: any) => resolve({}), 3000)
 
-        parseResult = await Promise.race([longTask, onTimeout].map(f => f()))
+        parseResult = await Promise.race([longTask, onTimeout].map((f) => f()))
 
         if (!parseResult.lead_image_url) {
           try {
@@ -493,10 +534,14 @@ export class PostResolver extends RepositoryInjector {
       parseResult &&
       parseResult.lead_image_url
     ) {
-      const response = await axios.get(parseResult.lead_image_url, { responseType: 'arraybuffer' })
+      const response = await axios.get(parseResult.lead_image_url, {
+        responseType: 'arraybuffer'
+      })
       const isYoutube = parseResult.lead_image_url.includes('ytimg.com')
       const resizedImage = await sharp(response.data)
-        .resize(isYoutube ? 128 : 72, 72, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .resize(isYoutube ? 128 : 72, 72, {
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
         .jpeg()
         .toBuffer()
 
@@ -506,18 +551,20 @@ export class PostResolver extends RepositoryInjector {
             Bucket: 'i.getcomet.net',
             Key: `thumbs/${postId}.jpg`,
             Body: resizedImage,
-            ContentType: 'image/jpeg',
+            ContentType: 'image/jpeg'
           },
           (err, data) => {
             if (err) reject(err)
             else resolve(data.Location.replace('s3.amazonaws.com/', ''))
-          },
-        ),
+          }
+        )
       )
     }
 
     const savedTopics = await this.topicRepository.save(
-      topics.map(topic => ({ name: topic.toLowerCase().replace(/ /g, '_') } as Topic)),
+      topics.map(
+        (topic) => ({ name: topic.toLowerCase().replace(/ /g, '_') } as Topic)
+      )
     )
 
     return this.postRepository.save({
@@ -531,16 +578,16 @@ export class PostResolver extends RepositoryInjector {
       thumbnailUrl: s3UploadLink ? s3UploadLink : undefined,
       domain: parseResult ? parseResult.domain.replace('www.', '') : undefined,
       topics: savedTopics,
-      topicsarr: savedTopics.map(topic => topic.name),
+      topicsarr: savedTopics.map((topic) => topic.name)
     } as Post)
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
+  @Mutation((returns) => Boolean)
   async editPost(
-    @Arg('postId', type => ID) postId: string,
+    @Arg('postId', (type) => ID) postId: string,
     @Arg('newTextContent') newTextContent: string,
-    @Ctx() { userId }: Context,
+    @Ctx() { userId }: Context
   ) {
     const post = await this.postRepository.findOne(postId)
     const user = await this.userRepository.findOne(userId)
@@ -560,8 +607,11 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async deletePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async deletePost(
+    @Arg('postId', (type) => ID) postId: string,
+    @Ctx() { userId }: Context
+  ) {
     const post = await this.postRepository.findOne(postId)
     const user = await this.userRepository.findOne(userId)
     if (post.authorId !== userId && !user.admin)
@@ -578,10 +628,10 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
+  @Mutation((returns) => Boolean)
   async togglePostEndorsement(
-    @Arg('postId', type => ID) postId: string,
-    @Ctx() { userId }: Context,
+    @Arg('postId', (type) => ID) postId: string,
+    @Ctx() { userId }: Context
   ) {
     const post = await this.postRepository
       .createQueryBuilder('post')
@@ -590,15 +640,19 @@ export class PostResolver extends RepositoryInjector {
       .getOne()
     if (!post) throw new Error('Invalid postId')
 
-    if (userId === post.authorId) throw new Error('Cannot endorse your own post')
+    if (userId === post.authorId)
+      throw new Error('Cannot endorse your own post')
 
     let active: boolean
 
-    const endorsement = await this.postEndorsementRepository.findOne({ postId, userId })
+    const endorsement = await this.postEndorsementRepository.findOne({
+      postId,
+      userId
+    })
     if (endorsement) {
       await this.postEndorsementRepository.update(
         { postId, userId },
-        { active: !endorsement.active },
+        { active: !endorsement.active }
       )
       active = !endorsement.active
     } else {
@@ -606,28 +660,39 @@ export class PostResolver extends RepositoryInjector {
         postId,
         userId,
         createdAt: new Date(),
-        active: true,
+        active: true
       })
       active = true
     }
 
     this.postRepository.update(
       { id: postId },
-      { endorsementCount: active ? post.endorsementCount + 1 : post.endorsementCount - 1 },
+      {
+        endorsementCount: active
+          ? post.endorsementCount + 1
+          : post.endorsementCount - 1
+      }
     )
 
     const author = await post.author
     this.userRepository.update(
       { id: author.id },
-      { endorsementCount: active ? author.endorsementCount + 1 : author.endorsementCount - 1 },
+      {
+        endorsementCount: active
+          ? author.endorsementCount + 1
+          : author.endorsementCount - 1
+      }
     )
 
     return active
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async hidePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async hidePost(
+    @Arg('postId', (type) => ID) postId: string,
+    @Ctx() { userId }: Context
+  ) {
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'hiddenPosts')
@@ -643,8 +708,11 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async unhidePost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async unhidePost(
+    @Arg('postId', (type) => ID) postId: string,
+    @Ctx() { userId }: Context
+  ) {
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'hiddenPosts')
@@ -654,8 +722,11 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async reportPost(@Arg('postId', type => ID) postId: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async reportPost(
+    @Arg('postId', (type) => ID) postId: string,
+    @Ctx() { userId }: Context
+  ) {
     const user = await this.userRepository.findOne(userId)
 
     await this.postRepository
@@ -669,7 +740,7 @@ export class PostResolver extends RepositoryInjector {
       user.username,
       process.env.NODE_ENV === 'production'
         ? `${process.env.ORIGIN_URL}/post/${postId}`
-        : `http://localhost:3000/post/${postId}`,
+        : `http://localhost:3000/post/${postId}`
     )
 
     return true
@@ -682,7 +753,10 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @FieldResolver()
-  async postView(@Root() post: Post, @Ctx() { postViewLoader, userId }: Context) {
+  async postView(
+    @Root() post: Post,
+    @Ctx() { postViewLoader, userId }: Context
+  ) {
     return postViewLoader.load({ postId: post.id, userId })
   }
 }

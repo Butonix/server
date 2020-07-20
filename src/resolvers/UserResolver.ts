@@ -8,7 +8,7 @@ import {
   Query,
   Resolver,
   Root,
-  UseMiddleware,
+  UseMiddleware
 } from 'type-graphql'
 import { Context } from '../Context'
 import { User } from '../entities/User'
@@ -18,9 +18,9 @@ import { CommentSort, UserCommentsArgs } from '../args/UserCommentsArgs'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Time } from '../args/FeedArgs'
 
-@Resolver(of => User)
+@Resolver((of) => User)
 export class UserResolver extends RepositoryInjector {
-  @Query(returns => User, { nullable: true })
+  @Query((returns) => User, { nullable: true })
   async currentUser(@Ctx() { userId }: Context) {
     if (!userId) {
       return null
@@ -39,7 +39,7 @@ export class UserResolver extends RepositoryInjector {
     return user
   }
 
-  @Query(returns => User, { nullable: true })
+  @Query((returns) => User, { nullable: true })
   async user(@Arg('username') username: string) {
     if (!username) return null
 
@@ -48,19 +48,24 @@ export class UserResolver extends RepositoryInjector {
       .where('user.username ILIKE :username', { username })
       .andWhere('user.banned = false')
       .loadRelationCountAndMap('user.followerCount', 'user.followers')
-      .loadRelationCountAndMap('user.commentCount', 'user.comments', 'comment', qb => {
-        return qb.andWhere('comment.deleted = false')
-      })
-      .loadRelationCountAndMap('user.postCount', 'user.posts', 'post', qb => {
+      .loadRelationCountAndMap(
+        'user.commentCount',
+        'user.comments',
+        'comment',
+        (qb) => {
+          return qb.andWhere('comment.deleted = false')
+        }
+      )
+      .loadRelationCountAndMap('user.postCount', 'user.posts', 'post', (qb) => {
         return qb.andWhere('post.deleted = false')
       })
       .getOne()
   }
 
-  @Query(returns => [Comment])
+  @Query((returns) => [Comment])
   async userComments(
     @Args() { username, page, pageSize, sort, time }: UserCommentsArgs,
-    @Ctx() { userId }: Context,
+    @Ctx() { userId }: Context
   ) {
     const user = await this.userRepository
       .createQueryBuilder('user')
@@ -107,24 +112,30 @@ export class UserResolver extends RepositoryInjector {
         'comment.personalEndorsementCount',
         'comment.endorsements',
         'endorsement',
-        qb => {
+        (qb) => {
           return qb
             .andWhere('endorsement.active = true')
             .andWhere('endorsement.userId = :userId', { userId })
-        },
+        }
       )
     }
 
     const comments = await qb.getMany()
 
-    comments.forEach(comment => (comment.isEndorsed = Boolean(comment.personalEndorsementCount)))
+    comments.forEach(
+      (comment) =>
+        (comment.isEndorsed = Boolean(comment.personalEndorsementCount))
+    )
 
     return comments
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async setProfilePicUrl(@Arg('profilePicUrl') profilePicUrl: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async setProfilePicUrl(
+    @Arg('profilePicUrl') profilePicUrl: string,
+    @Ctx() { userId }: Context
+  ) {
     if (
       !(
         profilePicUrl.startsWith('https://i.getcomet.net/profile') ||
@@ -138,7 +149,7 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
+  @Mutation((returns) => Boolean)
   async setBio(@Arg('bio') bio: string, @Ctx() { userId }: Context) {
     if (bio.length > 160) throw new Error('Bio must be 160 characters or less')
     await this.userRepository.update(userId, { bio })
@@ -146,8 +157,11 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async followUser(@Arg('followedId', type => ID) followedId: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async followUser(
+    @Arg('followedId', (type) => ID) followedId: string,
+    @Ctx() { userId }: Context
+  ) {
     if (followedId === userId) {
       throw new Error('Cannot follow yourself')
     }
@@ -162,10 +176,10 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
+  @Mutation((returns) => Boolean)
   async unfollowUser(
-    @Arg('followedId', type => ID) followedId: string,
-    @Ctx() { userId }: Context,
+    @Arg('followedId', (type) => ID) followedId: string,
+    @Ctx() { userId }: Context
   ) {
     if (followedId === userId) {
       throw new Error('Cannot unfollow yourself')
@@ -181,8 +195,11 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async blockUser(@Arg('blockedId', type => ID) blockedId: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async blockUser(
+    @Arg('blockedId', (type) => ID) blockedId: string,
+    @Ctx() { userId }: Context
+  ) {
     if (blockedId === userId) {
       throw new Error('Cannot block yourself')
     }
@@ -196,8 +213,11 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async unblockUser(@Arg('blockedId', type => ID) blockedId: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async unblockUser(
+    @Arg('blockedId', (type) => ID) blockedId: string,
+    @Ctx() { userId }: Context
+  ) {
     if (blockedId === userId) {
       throw new Error('Cannot unblock yourself')
     }
@@ -211,11 +231,11 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
+  @Mutation((returns) => Boolean)
   async banUser(
-    @Arg('bannedId', type => ID) bannedId: string,
+    @Arg('bannedId', (type) => ID) bannedId: string,
     @Arg('banReason') banReason: string,
-    @Ctx() { userId }: Context,
+    @Ctx() { userId }: Context
   ) {
     const user = await this.userRepository.findOne(userId)
     if (!user.admin) throw new Error('Must be admin to ban users')
@@ -226,26 +246,37 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async unbanUser(@Arg('bannedId', type => ID) bannedId: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async unbanUser(
+    @Arg('bannedId', (type) => ID) bannedId: string,
+    @Ctx() { userId }: Context
+  ) {
     const user = await this.userRepository.findOne(userId)
     if (!user.admin) throw new Error('Must be admin to unban users')
 
-    await this.userRepository.update(bannedId, { banned: false, banReason: null })
+    await this.userRepository.update(bannedId, {
+      banned: false,
+      banReason: null
+    })
 
     return true
   }
 
-  @FieldResolver(returns => Boolean)
+  @FieldResolver((returns) => Boolean)
   async isFollowing(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
 
     user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: userId })
-      .leftJoinAndSelect('user.following', 'targetUser', 'targetUser.id = :targetId', {
-        targetId: user.id,
-      })
+      .leftJoinAndSelect(
+        'user.following',
+        'targetUser',
+        'targetUser.id = :targetId',
+        {
+          targetId: user.id
+        }
+      )
       .getOne()
 
     if (!user) return false
@@ -253,16 +284,21 @@ export class UserResolver extends RepositoryInjector {
     return Boolean((await user.following).length)
   }
 
-  @FieldResolver(returns => Boolean)
+  @FieldResolver((returns) => Boolean)
   async isFollowed(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
 
     user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: user.id })
-      .leftJoinAndSelect('user.following', 'targetUser', 'targetUser.id = :targetId', {
-        targetId: userId,
-      })
+      .leftJoinAndSelect(
+        'user.following',
+        'targetUser',
+        'targetUser.id = :targetId',
+        {
+          targetId: userId
+        }
+      )
       .getOne()
 
     if (!user) return false
@@ -270,16 +306,21 @@ export class UserResolver extends RepositoryInjector {
     return Boolean((await user.following).length)
   }
 
-  @FieldResolver(returns => Boolean)
+  @FieldResolver((returns) => Boolean)
   async isBlocked(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
 
     user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: user.id })
-      .leftJoinAndSelect('user.blockedUsers', 'targetUser', 'targetUser.id = :targetId', {
-        targetId: userId,
-      })
+      .leftJoinAndSelect(
+        'user.blockedUsers',
+        'targetUser',
+        'targetUser.id = :targetId',
+        {
+          targetId: userId
+        }
+      )
       .getOne()
 
     if (!user) return false
@@ -287,16 +328,21 @@ export class UserResolver extends RepositoryInjector {
     return Boolean((await user.blockedUsers).length)
   }
 
-  @FieldResolver(returns => Boolean)
+  @FieldResolver((returns) => Boolean)
   async isBlocking(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
 
     user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: userId })
-      .leftJoinAndSelect('user.blockedUsers', 'targetUser', 'targetUser.id = :targetId', {
-        targetId: user.id,
-      })
+      .leftJoinAndSelect(
+        'user.blockedUsers',
+        'targetUser',
+        'targetUser.id = :targetId',
+        {
+          targetId: user.id
+        }
+      )
       .getOne()
 
     if (!user) return false
@@ -304,7 +350,7 @@ export class UserResolver extends RepositoryInjector {
     return Boolean((await user.blockedUsers).length)
   }
 
-  @FieldResolver(returns => Boolean)
+  @FieldResolver((returns) => Boolean)
   async isCurrentUser(@Root() user: User, @Ctx() { userId }: Context) {
     return user.id === userId
   }

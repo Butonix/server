@@ -13,11 +13,12 @@ export class RepositoryInjector {
   @InjectRepository(Comment) readonly commentRepository: TreeRepository<Comment>
   @InjectRepository(Post) readonly postRepository: Repository<Post>
   @InjectRepository(User) readonly userRepository: Repository<User>
-  @InjectRepository(PostEndorsement) readonly postEndorsementRepository: Repository<PostEndorsement>
-  @InjectRepository(CommentEndorsement) readonly commentEndorsementRepository: Repository<
-    CommentEndorsement
-  >
+  @InjectRepository(PostEndorsement)
+  readonly postEndorsementRepository: Repository<PostEndorsement>
+  @InjectRepository(CommentEndorsement)
+  readonly commentEndorsementRepository: Repository<CommentEndorsement>
   @InjectRepository(Topic) readonly topicRepository: Repository<Topic>
   @InjectRepository(PostView) readonly postViewRepository: Repository<PostView>
-  @InjectRepository(ReplyNotification) readonly replyNotifRepository: Repository<ReplyNotification>
+  @InjectRepository(ReplyNotification)
+  readonly replyNotifRepository: Repository<ReplyNotification>
 }

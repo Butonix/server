@@ -8,7 +8,7 @@ import {
   PrimaryColumn,
   Tree,
   TreeChildren,
-  TreeParent,
+  TreeParent
 } from 'typeorm'
 import { Lazy } from '../lazy'
 import { Post } from './Post'
@@ -18,33 +18,33 @@ import { CommentEndorsement } from './CommentEndorsement'
 @Entity()
 @Tree('materialized-path')
 export class Comment {
-  @Field(type => ID)
+  @Field((type) => ID)
   @PrimaryColumn('varchar', { length: 20 })
   id: string
 
-  @Field(type => User, { nullable: true })
+  @Field((type) => User, { nullable: true })
   @ManyToOne(
-    type => User,
-    user => user.comments,
+    (type) => User,
+    (user) => user.comments
   )
   author: Lazy<User>
 
-  @Field(type => ID, { nullable: true })
+  @Field((type) => ID, { nullable: true })
   @Column({ nullable: true })
   authorId: string
 
-  @Field(type => Post, { nullable: true })
+  @Field((type) => Post, { nullable: true })
   @ManyToOne(
-    type => Post,
-    post => post.comments,
+    (type) => Post,
+    (post) => post.comments
   )
   post: Lazy<Post>
 
-  @Field(type => ID, { nullable: true })
+  @Field((type) => ID, { nullable: true })
   @Column({ nullable: true })
   postId: string
 
-  @Field(type => ID, { nullable: true })
+  @Field((type) => ID, { nullable: true })
   @Column({ nullable: true })
   rootCommentId: string
 
@@ -60,11 +60,11 @@ export class Comment {
   @Column({ nullable: true })
   editedAt?: Date
 
-  @Field(type => Comment, { nullable: true })
+  @Field((type) => Comment, { nullable: true })
   @TreeParent()
   parentComment: Lazy<Comment>
 
-  @Field(type => ID, { nullable: true })
+  @Field((type) => ID, { nullable: true })
   @Column({ nullable: true })
   parentCommentId: string
 
@@ -72,8 +72,8 @@ export class Comment {
   childComments: Lazy<Comment[]>
 
   @OneToMany(
-    type => CommentEndorsement,
-    endorsement => endorsement.comment,
+    (type) => CommentEndorsement,
+    (endorsement) => endorsement.comment
   )
   endorsements: Lazy<CommentEndorsement[]>
 

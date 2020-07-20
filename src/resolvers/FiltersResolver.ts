@@ -7,7 +7,7 @@ import { User } from '../entities/User'
 
 @Resolver()
 export class FiltersResolver extends RepositoryInjector {
-  @Query(returns => [Topic])
+  @Query((returns) => [Topic])
   async hiddenTopics(@Ctx() { userId }: Context) {
     if (!userId) return []
 
@@ -17,12 +17,12 @@ export class FiltersResolver extends RepositoryInjector {
       .of(userId)
       .loadMany()
 
-    topics.forEach(topic => (topic.isHidden = true))
+    topics.forEach((topic) => (topic.isHidden = true))
 
     return topics
   }
 
-  @Query(returns => [User])
+  @Query((returns) => [User])
   async blockedUsers(@Ctx() { userId }: Context) {
     if (!userId) return []
 
@@ -34,22 +34,27 @@ export class FiltersResolver extends RepositoryInjector {
 
     if (blockedUsers.length === 0) return []
 
-    const blockedUsersIds = blockedUsers.map(u => u.id)
+    const blockedUsersIds = blockedUsers.map((u) => u.id)
 
     const users = await this.userRepository
       .createQueryBuilder('user')
       .whereInIds(blockedUsersIds)
       .andWhere('user.banned = false')
       .loadRelationCountAndMap('user.followerCount', 'user.followers')
-      .loadRelationCountAndMap('user.commentCount', 'user.comments', 'comment', qb => {
-        return qb.andWhere('comment.deleted = false')
-      })
-      .loadRelationCountAndMap('user.postCount', 'user.posts', 'post', qb => {
+      .loadRelationCountAndMap(
+        'user.commentCount',
+        'user.comments',
+        'comment',
+        (qb) => {
+          return qb.andWhere('comment.deleted = false')
+        }
+      )
+      .loadRelationCountAndMap('user.postCount', 'user.posts', 'post', (qb) => {
         return qb.andWhere('post.deleted = false')
       })
       .getMany()
 
-    users.forEach(user => (user.isBlocking = true))
+    users.forEach((user) => (user.isBlocking = true))
 
     return users
   }

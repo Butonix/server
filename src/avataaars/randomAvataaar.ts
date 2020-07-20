@@ -35,7 +35,7 @@ const topTypes = [
   'ShortHairSides',
   'ShortHairTheCaesar',
   'ShortHairTheCaesarSidePart',
-  'ShortHairTheCaesarSidePart',
+  'ShortHairTheCaesarSidePart'
 ]
 
 const accessoriesTypes = [
@@ -45,7 +45,7 @@ const accessoriesTypes = [
   'Prescription02',
   'Round',
   'Sunglasses',
-  'Wayfarers',
+  'Wayfarers'
 ]
 
 const hairColors = [
@@ -58,7 +58,7 @@ const hairColors = [
   'PastelPink',
   'Platinum',
   'Red',
-  'SilverGray',
+  'SilverGray'
 ]
 
 const facialHairTypes = [
@@ -67,7 +67,7 @@ const facialHairTypes = [
   'BeardLight',
   'BeardMagestic',
   'MoustacheFancy',
-  'MoustacheMagnum',
+  'MoustacheMagnum'
 ]
 
 const facialHairColors = [
@@ -78,7 +78,7 @@ const facialHairColors = [
   'Brown',
   'BrownDark',
   'Platinum',
-  'Red',
+  'Red'
 ]
 
 const clotheTypes = [
@@ -90,7 +90,7 @@ const clotheTypes = [
   'Overall',
   'ShirtCrewNeck',
   'ShirtScoopNeck',
-  'ShirtVNeck',
+  'ShirtVNeck'
 ]
 
 const clotheColors = [
@@ -108,7 +108,7 @@ const clotheColors = [
   'PastelYellow',
   'Pink',
   'Red',
-  'White',
+  'White'
 ]
 
 const eyeTypes = [
@@ -123,7 +123,7 @@ const eyeTypes = [
   'Squint',
   'Surprised',
   'Wink',
-  'WinkWacky',
+  'WinkWacky'
 ]
 
 const eyebrowTypes = [
@@ -138,7 +138,7 @@ const eyebrowTypes = [
   'SadConcernedNatural',
   'UnibrowNatural',
   'UpDown',
-  'UpDownNatural',
+  'UpDownNatural'
 ]
 
 const mouthTypes = [
@@ -153,12 +153,21 @@ const mouthTypes = [
   'Smile',
   'Tongue',
   'Twinkle',
-  'Vomit',
+  'Vomit'
 ]
 
-const skinColors = ['Tanned', 'Yellow', 'Pale', 'Light', 'Brown', 'DarkBrown', 'Black']
+const skinColors = [
+  'Tanned',
+  'Yellow',
+  'Pale',
+  'Light',
+  'Brown',
+  'DarkBrown',
+  'Black'
+]
 
-const randomFromArr = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)]
+const randomFromArr = (arr: any[]) =>
+  arr[Math.floor(Math.random() * arr.length)]
 
 export const randomAvataaarUrl = () => {
   const topType = randomFromArr(topTypes)

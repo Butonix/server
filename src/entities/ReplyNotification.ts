@@ -12,35 +12,35 @@ export class ReplyNotification {
   @PrimaryGeneratedColumn('uuid')
   readonly id: string
 
-  @Field(type => User, { nullable: true })
-  @ManyToOne(type => User)
+  @Field((type) => User, { nullable: true })
+  @ManyToOne((type) => User)
   toUser: Lazy<User>
 
-  @Field(type => ID, { nullable: true })
+  @Field((type) => ID, { nullable: true })
   @Column({ nullable: true })
   toUserId: string
 
-  @Field(type => User, { nullable: true })
-  @ManyToOne(type => User)
+  @Field((type) => User, { nullable: true })
+  @ManyToOne((type) => User)
   fromUser: Lazy<User>
 
-  @Field(type => ID, { nullable: true })
+  @Field((type) => ID, { nullable: true })
   @Column({ nullable: true })
   fromUserId: string
 
-  @Field(type => Post, { nullable: true })
-  @ManyToOne(type => Post)
+  @Field((type) => Post, { nullable: true })
+  @ManyToOne((type) => Post)
   post: Lazy<Post>
 
-  @Field(type => ID, { nullable: true })
+  @Field((type) => ID, { nullable: true })
   @Column({ nullable: true })
   postId: string
 
-  @Field(type => Comment, { nullable: true })
-  @ManyToOne(type => Comment)
+  @Field((type) => Comment, { nullable: true })
+  @ManyToOne((type) => Comment)
   comment: Lazy<Comment>
 
-  @Field(type => ID, { nullable: true })
+  @Field((type) => ID, { nullable: true })
   @Column({ nullable: true })
   commentId: string
 
@@ -52,7 +52,7 @@ export class ReplyNotification {
   @Column()
   createdAt: Date
 
-  @Field(type => ID, { nullable: true })
+  @Field((type) => ID, { nullable: true })
   @Column({ nullable: true })
   parentCommentId: string
 }

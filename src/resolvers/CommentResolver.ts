@@ -8,7 +8,7 @@ import {
   Query,
   Resolver,
   Root,
-  UseMiddleware,
+  UseMiddleware
 } from 'type-graphql'
 import { RequiresAuth } from '../RequiresAuth'
 import { Context } from '../Context'
@@ -24,13 +24,13 @@ import { ReplyNotification } from '../entities/ReplyNotification'
 import xss from 'xss'
 import { whiteList } from '../xssWhiteList'
 
-@Resolver(of => Comment)
+@Resolver((of) => Comment)
 export class CommentResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Comment)
+  @Mutation((returns) => Comment)
   async submitComment(
     @Args() { textContent, postId, parentCommentId }: SubmitCommentArgs,
-    @Ctx() { userId }: Context,
+    @Ctx() { userId }: Context
   ) {
     if (!textContent) throw new Error('textContent cannot be empty')
 
@@ -57,13 +57,15 @@ export class CommentResolver extends RepositoryInjector {
       postId,
       authorId: userId,
       createdAt: new Date(),
-      isEndorsed: false,
+      isEndorsed: false
     } as Comment)
 
     this.postRepository.increment({ id: postId }, 'commentCount', 1)
 
     if (parentCommentId) {
-      const parentComment = await this.commentRepository.findOne(parentCommentId)
+      const parentComment = await this.commentRepository.findOne(
+        parentCommentId
+      )
       if (parentComment.authorId !== userId) {
         this.replyNotifRepository.save({
           commentId,
@@ -71,7 +73,7 @@ export class CommentResolver extends RepositoryInjector {
           toUserId: parentComment.authorId,
           postId,
           createdAt: new Date(),
-          parentCommentId,
+          parentCommentId
         } as ReplyNotification)
       }
     } else {
@@ -82,7 +84,7 @@ export class CommentResolver extends RepositoryInjector {
           fromUserId: userId,
           toUserId: post.authorId,
           postId,
-          createdAt: new Date(),
+          createdAt: new Date()
         } as ReplyNotification)
       }
     }
@@ -90,8 +92,11 @@ export class CommentResolver extends RepositoryInjector {
     return savedComment
   }
 
-  @Query(returns => [Comment])
-  async postComments(@Args() { postId, sort }: PostCommentsArgs, @Ctx() { userId }: Context) {
+  @Query((returns) => [Comment])
+  async postComments(
+    @Args() { postId, sort }: PostCommentsArgs,
+    @Ctx() { userId }: Context
+  ) {
     const post = await this.postRepository.findOne({ id: postId })
 
     if (!post) return []
@@ -105,11 +110,11 @@ export class CommentResolver extends RepositoryInjector {
         'comment.personalEndorsementCount',
         'comment.endorsements',
         'endorsement',
-        qb => {
+        (qb) => {
           return qb
             .andWhere('endorsement.active = true')
             .andWhere('endorsement.userId = :userId', { userId })
-        },
+        }
       )
 
       const blockedUsers = (
@@ -118,9 +123,11 @@ export class CommentResolver extends RepositoryInjector {
           .relation(User, 'blockedUsers')
           .of(userId)
           .loadMany()
-      ).map(user => user.id)
+      ).map((user) => user.id)
 
-      qb.andWhere('NOT (comment.authorId = ANY(:blockedUsers))', { blockedUsers })
+      qb.andWhere('NOT (comment.authorId = ANY(:blockedUsers))', {
+        blockedUsers
+      })
     }
 
     if (sort === Sort.TOP) {
@@ -131,7 +138,7 @@ export class CommentResolver extends RepositoryInjector {
 
     const comments = await qb.getMany()
 
-    comments.forEach(comment => {
+    comments.forEach((comment) => {
       comment.isEndorsed = Boolean(comment.personalEndorsementCount)
       if (comment.deleted) {
         comment.textContent = `<p>[deleted]</p>`
@@ -144,8 +151,11 @@ export class CommentResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
-  async deleteComment(@Arg('commentId', type => ID) commentId: string, @Ctx() { userId }: Context) {
+  @Mutation((returns) => Boolean)
+  async deleteComment(
+    @Arg('commentId', (type) => ID) commentId: string,
+    @Ctx() { userId }: Context
+  ) {
     const comment = await this.commentRepository.findOne(commentId)
     const user = await this.userRepository.findOne(userId)
     if (comment.authorId !== userId && !user.admin)
@@ -164,11 +174,11 @@ export class CommentResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
+  @Mutation((returns) => Boolean)
   async editComment(
-    @Arg('commentId', type => ID) commentId: string,
+    @Arg('commentId', (type) => ID) commentId: string,
     @Arg('newTextContent') newTextContent: string,
-    @Ctx() { userId }: Context,
+    @Ctx() { userId }: Context
   ) {
     const comment = await this.commentRepository.findOne(commentId)
     const user = await this.userRepository.findOne(userId)
@@ -188,10 +198,10 @@ export class CommentResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation(returns => Boolean)
+  @Mutation((returns) => Boolean)
   async toggleCommentEndorsement(
-    @Arg('commentId', type => ID) commentId: string,
-    @Ctx() { userId }: Context,
+    @Arg('commentId', (type) => ID) commentId: string,
+    @Ctx() { userId }: Context
   ) {
     const comment = await this.commentRepository
       .createQueryBuilder('comment')
@@ -200,15 +210,19 @@ export class CommentResolver extends RepositoryInjector {
       .getOne()
     if (!comment) throw new Error('Invalid commentId')
 
-    if (userId === comment.authorId) throw new Error('Cannot endorse your own comment')
+    if (userId === comment.authorId)
+      throw new Error('Cannot endorse your own comment')
 
     let active: boolean
 
-    const endorsement = await this.commentEndorsementRepository.findOne({ commentId, userId })
+    const endorsement = await this.commentEndorsementRepository.findOne({
+      commentId,
+      userId
+    })
     if (endorsement) {
       await this.commentEndorsementRepository.update(
         { commentId, userId },
-        { active: !endorsement.active },
+        { active: !endorsement.active }
       )
       active = !endorsement.active
     } else {
@@ -216,20 +230,28 @@ export class CommentResolver extends RepositoryInjector {
         commentId,
         userId,
         createdAt: new Date(),
-        active: true,
+        active: true
       })
       active = true
     }
 
     this.commentRepository.update(
       { id: commentId },
-      { endorsementCount: active ? comment.endorsementCount + 1 : comment.endorsementCount - 1 },
+      {
+        endorsementCount: active
+          ? comment.endorsementCount + 1
+          : comment.endorsementCount - 1
+      }
     )
 
     const author = await comment.author
     this.userRepository.update(
       { id: author.id },
-      { endorsementCount: active ? author.endorsementCount + 1 : author.endorsementCount - 1 },
+      {
+        endorsementCount: active
+          ? author.endorsementCount + 1
+          : author.endorsementCount - 1
+      }
     )
 
     return active

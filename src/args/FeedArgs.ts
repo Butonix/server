@@ -5,7 +5,7 @@ export enum Sort {
   NEW = 'new',
   TOP = 'top',
   HOT = 'hot',
-  COMMENTS = 'comments',
+  COMMENTS = 'comments'
 }
 
 export enum Time {
@@ -14,32 +14,32 @@ export enum Time {
   WEEK = 'week',
   MONTH = 'month',
   YEAR = 'year',
-  ALL = 'all',
+  ALL = 'all'
 }
 
 export enum Filter {
   ALL = 'all',
-  MYTOPICS = 'mytopics',
+  MYTOPICS = 'mytopics'
 }
 
 export enum Type {
   TEXT = 'text',
   LINK = 'link',
-  IMAGE = 'image',
+  IMAGE = 'image'
 }
 
 @ArgsType()
 export class FeedArgs extends PaginationArgs {
-  @Field(type => Sort, { defaultValue: Sort.HOT })
+  @Field((type) => Sort, { defaultValue: Sort.HOT })
   sort: Sort = Sort.HOT
 
-  @Field(type => Time, { defaultValue: Time.ALL })
+  @Field((type) => Time, { defaultValue: Time.ALL })
   time: Time = Time.ALL
 
-  @Field(type => Filter, { defaultValue: Filter.ALL })
+  @Field((type) => Filter, { defaultValue: Filter.ALL })
   filter: Filter = Filter.ALL
 
-  @Field(type => [Type], { defaultValue: [] })
+  @Field((type) => [Type], { defaultValue: [] })
   types: Type[]
 
   @Field({ nullable: true })

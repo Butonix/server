@@ -3,9 +3,9 @@ import { Sort, Time } from './FeedArgs'
 
 @ArgsType()
 export class PostCommentsArgs {
-  @Field(type => ID)
+  @Field((type) => ID)
   postId: string
 
-  @Field(type => Sort, { defaultValue: Sort.TOP })
+  @Field((type) => Sort, { defaultValue: Sort.TOP })
   sort: Sort = Sort.TOP
 }

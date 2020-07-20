@@ -5,7 +5,7 @@ import { LoginArgs } from './LoginArgs'
 @ArgsType()
 export class SignUpArgs extends LoginArgs {
   @Field({ nullable: true })
-  @ValidateIf(e => e.email !== '')
+  @ValidateIf((e) => e.email !== '')
   @IsOptional()
   @IsEmail()
   email?: string
