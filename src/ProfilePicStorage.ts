@@ -42,7 +42,7 @@ export class ProfilePicStorage implements StorageEngine {
     })
 
     const transformer = sharp()
-      .resize(150, 150, { fit: 'cover' })
+      .resize(370, 370, { fit: 'cover' })
       .png()
 
     const outStream = new Stream.PassThrough()
