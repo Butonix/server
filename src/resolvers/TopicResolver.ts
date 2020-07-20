@@ -145,6 +145,7 @@ export class TopicResolver extends RepositoryInjector {
 
   @FieldResolver()
   capitalizedName(@Root() topic: Topic) {
+    if (topic.customName) return topic.customName
     return topic.name
       .replace(/_/g, ' ')
       .split(' ')

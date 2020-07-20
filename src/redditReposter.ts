@@ -45,6 +45,16 @@ const subreddits = [
   'technology',
   'indieheads',
   'hiphopheads',
+  'listentothis',
+  'greentext',
+  'Music',
+  'ProgrammerHumor',
+  'GameDeals',
+  'WikiLeaks',
+  'DrugNerds',
+  'nba',
+  'nfl',
+  'youtubehaiku',
 ]
 
 function mapPostToTopics(post: any): string[] {
@@ -56,13 +66,22 @@ function mapPostToTopics(post: any): string[] {
   else if (subreddit === 'hiphopheads') topics = ['music', 'hip_hop_music']
   else if (subreddit === 'gadgets') topics = ['technology', 'gadgets']
   else if (subreddit === 'games') topics = ['gaming']
+  else if (subreddit === 'listentothis') topics = ['music']
+  else if (subreddit === 'gamedeals') topics = ['gaming', 'game_deals']
+  else if (subreddit === 'programmerhumor') topics = ['programming', 'programmer_humor']
+  else if (subreddit === 'drugnerds') topics = ['drugs']
+  else if (subreddit === 'nba') topics = ['sports', 'nba']
+  else if (subreddit === 'nfl') topics = ['sports', 'nfl']
+  else if (subreddit === 'youtubehaiku') topics = ['videos', 'youtube_haiku']
   if (post.title.toLowerCase().includes('trump')) topics.push('donald_trump', 'election_2020')
   if (post.title.toLowerCase().includes('biden')) topics.push('joe_biden', 'election_2020')
-  if (post.title.toLowerCase().includes('politic')) topics.push('politics', 'election_2020')
   if (post.title.toLowerCase().includes('republican')) topics.push('politics', 'election_2020')
   if (post.title.toLowerCase().includes('democrat')) topics.push('politics', 'election_2020')
   if (post.title.toLowerCase().includes('kanye')) topics.push('kanye_west')
-  if (post.title.toLowerCase().includes('poll')) topics.push('politics', 'election_2020')
+  if (post.title.toLowerCase().includes('psychedelic')) topics.push('psychedelics')
+  if (post.title.toLowerCase().includes('lsd')) topics.push('psychedelics', 'lsd')
+  if (post.title.toLowerCase().includes('shrooms')) topics.push('psychedelics', 'shrooms')
+  if (post.title.toLowerCase().includes('dmt')) topics.push('psychedelics', 'dmt')
   topics = [...new Set(topics)]
   return topics
 }

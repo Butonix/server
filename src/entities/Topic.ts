@@ -26,6 +26,9 @@ export class Topic {
   @Column('text', { nullable: true })
   description?: string
 
+  @Column('text', { nullable: true })
+  customName?: string
+
   @Column('int', { select: false, default: 0 })
   total: number
 
