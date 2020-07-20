@@ -33,7 +33,9 @@ export class UserResolver extends RepositoryInjector {
       .getOne()
 
     if (user) {
-      this.userRepository.update(user.id, { lastLogin: new Date() })
+      const lastLogin = new Date()
+      user.lastLogin = lastLogin
+      this.userRepository.update(user.id, { lastLogin })
     }
 
     return user
