@@ -30,7 +30,6 @@ const entities = [
 
 const subreddits = [
   'programming',
-  'conspiracy',
   'science',
   'Games',
   'movies',
@@ -46,7 +45,6 @@ const subreddits = [
   'indieheads',
   'hiphopheads',
   'listentothis',
-  'greentext',
   'Music',
   'GameDeals',
   'WikiLeaks',
