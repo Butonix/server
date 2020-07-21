@@ -47,8 +47,6 @@ const subreddits = [
   'listentothis',
   'Music',
   'GameDeals',
-  'WikiLeaks',
-  'DrugNerds',
   'nba',
   'nfl',
   'youtubehaiku'
