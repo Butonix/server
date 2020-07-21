@@ -56,7 +56,7 @@ function mapPostToTopics(post: any): string[] {
   const subreddit = post.subreddit.toLowerCase()
   let topics = [subreddit]
   if (subreddit === 'internetisbeautiful') topics = ['internet_is_beautiful']
-  else if (subreddit === 'worldnews') topics = ['news']
+  else if (subreddit === 'worldnews') topics = ['news', 'world_news']
   else if (subreddit === 'indieheads') topics = ['music', 'indie_music']
   else if (subreddit === 'hiphopheads') topics = ['music', 'hip_hop_music']
   else if (subreddit === 'gadgets') topics = ['technology', 'gadgets']
