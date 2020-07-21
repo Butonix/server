@@ -63,7 +63,6 @@ function mapPostToTopics(post: any): string[] {
   else if (subreddit === 'games') topics = ['gaming']
   else if (subreddit === 'listentothis') topics = ['music']
   else if (subreddit === 'gamedeals') topics = ['gaming', 'game_deals']
-  else if (subreddit === 'drugnerds') topics = ['drugs']
   else if (subreddit === 'nba') topics = ['sports', 'nba']
   else if (subreddit === 'nfl') topics = ['sports', 'nfl']
   else if (subreddit === 'youtubehaiku') topics = ['videos', 'youtube_haiku']
