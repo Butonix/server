@@ -207,7 +207,9 @@ export class PostResolver extends RepositoryInjector {
     if (username) {
       const user = await this.userRepository
         .createQueryBuilder('user')
-        .where('user.username ILIKE :username', { username })
+        .where('user.username ILIKE :username', {
+          username: username.replace(/_/g, '\\_')
+        })
         .getOne()
 
       if (!user) return []

@@ -47,7 +47,9 @@ export class UserResolver extends RepositoryInjector {
 
     return this.userRepository
       .createQueryBuilder('user')
-      .where('user.username ILIKE :username', { username })
+      .where('user.username ILIKE :username', {
+        username: username.replace(/_/g, '\\_')
+      })
       .andWhere('user.banned = false')
       .loadRelationCountAndMap('user.followerCount', 'user.followers')
       .loadRelationCountAndMap(
@@ -71,7 +73,9 @@ export class UserResolver extends RepositoryInjector {
   ) {
     const user = await this.userRepository
       .createQueryBuilder('user')
-      .where('user.username ILIKE :username', { username })
+      .where('user.username ILIKE :username', {
+        username: username.replace(/_/g, '\\_')
+      })
       .getOne()
 
     if (!user) return []

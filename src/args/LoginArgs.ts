@@ -1,11 +1,11 @@
 import { ArgsType, Field } from 'type-graphql'
-import { IsAlphanumeric, Length } from 'class-validator'
+import { Matches, Length } from 'class-validator'
 
 @ArgsType()
 export class LoginArgs {
   @Field()
-  @Length(3, 20)
-  @IsAlphanumeric()
+  @Length(3, 15)
+  @Matches(/^[a-zA-Z0-9_]+$/)
   username: string
 
   @Field()

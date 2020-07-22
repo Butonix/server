@@ -27,7 +27,7 @@ export class AuthResolver {
       throw new Error('Invalid username')
 
     const foundUser = await this.userRepository.findOne({
-      where: `"username" ILIKE '${username}'`
+      where: `"username" ILIKE '${username.replace(/_/g, '\\_')}'`
     })
     if (foundUser) throw new Error('Username taken')
 
@@ -54,7 +54,7 @@ export class AuthResolver {
     @Ctx() { req, res }: Context
   ) {
     const user = await this.userRepository.findOne({
-      where: `"username" ILIKE '${username}'`
+      where: `"username" ILIKE '${username.replace(/_/g, '\\_')}'`
     })
     if (!user) throw new Error('Invalid Login')
 
