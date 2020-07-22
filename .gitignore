@@ -78,3 +78,5 @@ dist/
 src/schema.graphql
 
 yarn-error.log*
+
+newrelic_agent.log

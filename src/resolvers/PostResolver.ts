@@ -495,7 +495,6 @@ export class PostResolver extends RepositoryInjector {
     if (type === PostType.LINK || type === PostType.IMAGE) {
       if (isImageUrl(link)) {
         parseResult = {
-          // eslint-disable-next-line @typescript-eslint/camelcase
           lead_image_url: link
         }
         type = PostType.IMAGE
@@ -518,7 +517,6 @@ export class PostResolver extends RepositoryInjector {
 
         if (!parseResult.lead_image_url) {
           try {
-            // eslint-disable-next-line @typescript-eslint/camelcase
             parseResult.lead_image_url = await getThumbnailUrl(link)
           } catch (e) {}
         }

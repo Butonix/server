@@ -194,7 +194,6 @@ async function redditReposter() {
 
     if (isImageUrl(post.url)) {
       parseResult = {
-        // eslint-disable-next-line @typescript-eslint/camelcase
         lead_image_url: post.url
       }
       type = PostType.IMAGE
@@ -219,7 +218,6 @@ async function redditReposter() {
 
         if (!parseResult.lead_image_url) {
           try {
-            // eslint-disable-next-line @typescript-eslint/camelcase
             parseResult.lead_image_url = await getThumbnailUrl(post.url, 10000)
           } catch (e) {}
         }

@@ -1,3 +1,5 @@
+import 'newrelic'
+
 import 'reflect-metadata'
 import * as path from 'path'
 import { buildSchema, registerEnumType } from 'type-graphql'
