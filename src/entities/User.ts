@@ -12,13 +12,13 @@ import { Lazy } from '../lazy'
 import { Post } from './Post'
 import { PostEndorsement } from './PostEndorsement'
 import { CommentEndorsement } from './CommentEndorsement'
-import { Topic } from './Topic'
 import { PostView } from './PostView'
+import { Planet } from './Planet'
 
 @ObjectType()
 @Entity()
 export class User {
-  @Field((type) => ID)
+  @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   readonly id: string
 
@@ -58,55 +58,73 @@ export class User {
   @Column({ nullable: true })
   banReason?: string
 
+  @Column('text', { array: true, default: {} })
+  ipAddresses: string[]
+
   @OneToMany(
-    (type) => Comment,
+    () => Comment,
     (comment) => comment.author
   )
   comments: Lazy<Comment[]>
 
   @OneToMany(
-    (type) => Post,
+    () => Post,
     (post) => post.author
   )
   posts: Lazy<Post[]>
 
-  @Field((type) => [Topic])
+  @Field(() => [Planet])
   @ManyToMany(
-    (type) => Topic,
-    (topic) => topic.followers
+    () => Planet,
+    (planet) => planet.users
   )
-  followedTopics: Lazy<Topic[]>
+  planets: Lazy<Planet[]>
 
-  @ManyToMany((type) => Topic)
+  @Field(() => [Planet])
+  @ManyToMany(
+    () => Planet,
+    (planet) => planet.moderators
+  )
+  moderatedPlanets: Lazy<Planet[]>
+
+  @ManyToMany(() => Planet)
   @JoinTable()
-  hiddenTopics: Lazy<Topic[]>
+  filteredPlanets: Lazy<Planet[]>
 
-  @ManyToMany((type) => Post)
+  @ManyToMany(() => Post)
+  @JoinTable()
+  savedPosts: Lazy<Post[]>
+
+  @ManyToMany(() => Comment)
+  @JoinTable()
+  savedComments: Lazy<Comment[]>
+
+  @ManyToMany(() => Post)
   @JoinTable()
   hiddenPosts: Lazy<Post[]>
 
   @ManyToMany(
-    (type) => User,
+    () => User,
     (user) => user.following
   )
   @JoinTable()
   followers: Lazy<User[]>
 
   @ManyToMany(
-    (type) => User,
+    () => User,
     (user) => user.followers
   )
   following: Lazy<User[]>
 
   @ManyToMany(
-    (type) => User,
+    () => User,
     (user) => user.blockedUsers
   )
   @JoinTable()
   blockedBy: Lazy<User[]>
 
   @ManyToMany(
-    (type) => User,
+    () => User,
     (user) => user.blockedBy
   )
   blockedUsers: Lazy<User[]>
@@ -130,13 +148,13 @@ export class User {
   postCount: number
 
   @OneToMany(
-    (type) => PostEndorsement,
+    () => PostEndorsement,
     (endorsement) => endorsement.user
   )
   postEndorsements: Lazy<PostEndorsement[]>
 
   @OneToMany(
-    (type) => CommentEndorsement,
+    () => CommentEndorsement,
     (endorsement) => endorsement.user
   )
   commentEndorsements: Lazy<CommentEndorsement[]>
@@ -163,7 +181,7 @@ export class User {
   tagColor?: string
 
   @OneToMany(
-    (type) => PostView,
+    () => PostView,
     (postView) => postView.user
   )
   postViews: Lazy<PostView[]>

@@ -1,28 +1,27 @@
-import { Ctx, Query, Resolver, UseMiddleware } from 'type-graphql'
+import { Ctx, Query, Resolver } from 'type-graphql'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Context } from '../Context'
-import { RequiresAuth } from '../RequiresAuth'
-import { Topic } from '../entities/Topic'
 import { User } from '../entities/User'
+import { Planet } from '../entities/Planet'
 
 @Resolver()
 export class FiltersResolver extends RepositoryInjector {
-  @Query((returns) => [Topic])
-  async hiddenTopics(@Ctx() { userId }: Context) {
+  @Query(() => [Planet])
+  async filteredPlanets(@Ctx() { userId }: Context) {
     if (!userId) return []
 
-    const topics = await this.userRepository
+    const planets = await this.userRepository
       .createQueryBuilder()
-      .relation(User, 'hiddenTopics')
+      .relation(User, 'filteredPlanets')
       .of(userId)
       .loadMany()
 
-    topics.forEach((topic) => (topic.isHidden = true))
+    planets.forEach((planet) => (planet.isHidden = true))
 
-    return topics
+    return planets
   }
 
-  @Query((returns) => [User])
+  @Query(() => [User])
   async blockedUsers(@Ctx() { userId }: Context) {
     if (!userId) return []
 

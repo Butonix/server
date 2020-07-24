@@ -15,7 +15,7 @@ import { SignUpArgs } from '../args/SignUpArgs'
 export class AuthResolver {
   @InjectRepository(User) readonly userRepository: Repository<User>
 
-  @Mutation((returns) => LoginResponse)
+  @Mutation(() => LoginResponse)
   async signUp(
     @Args() { username, password, email }: SignUpArgs,
     @Ctx() { req, res }: Context
@@ -39,7 +39,8 @@ export class AuthResolver {
       passwordHash,
       bio: 'New Comet user',
       createdAt: new Date(),
-      lastLogin: new Date()
+      lastLogin: new Date(),
+      profilePicUrl: randomAvataaarUrl()
     } as User)
 
     return {
@@ -48,7 +49,7 @@ export class AuthResolver {
     } as LoginResponse
   }
 
-  @Mutation((returns) => LoginResponse)
+  @Mutation(() => LoginResponse)
   async login(
     @Args() { username, password }: LoginArgs,
     @Ctx() { req, res }: Context
@@ -77,7 +78,7 @@ export class AuthResolver {
     } as LoginResponse
   }
 
-  @Mutation((returns) => LoginResponse)
+  @Mutation(() => LoginResponse)
   @UseMiddleware(RequiresAuth)
   async changePassword(
     @Arg('oldPassword') oldPassword: string,

@@ -24,10 +24,10 @@ import { ReplyNotification } from '../entities/ReplyNotification'
 import xss from 'xss'
 import { whiteList } from '../xssWhiteList'
 
-@Resolver((of) => Comment)
+@Resolver(() => Comment)
 export class CommentResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Comment)
+  @Mutation(() => Comment)
   async submitComment(
     @Args() { textContent, postId, parentCommentId }: SubmitCommentArgs,
     @Ctx() { userId }: Context
@@ -92,7 +92,7 @@ export class CommentResolver extends RepositoryInjector {
     return savedComment
   }
 
-  @Query((returns) => [Comment])
+  @Query(() => [Comment])
   async postComments(
     @Args() { postId, sort }: PostCommentsArgs,
     @Ctx() { userId }: Context
@@ -151,9 +151,9 @@ export class CommentResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async deleteComment(
-    @Arg('commentId', (type) => ID) commentId: string,
+    @Arg('commentId', () => ID) commentId: string,
     @Ctx() { userId }: Context
   ) {
     const comment = await this.commentRepository.findOne(commentId)
@@ -174,9 +174,9 @@ export class CommentResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async editComment(
-    @Arg('commentId', (type) => ID) commentId: string,
+    @Arg('commentId', () => ID) commentId: string,
     @Arg('newTextContent') newTextContent: string,
     @Ctx() { userId }: Context
   ) {
@@ -198,9 +198,9 @@ export class CommentResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async toggleCommentEndorsement(
-    @Arg('commentId', (type) => ID) commentId: string,
+    @Arg('commentId', () => ID) commentId: string,
     @Ctx() { userId }: Context
   ) {
     const comment = await this.commentRepository
@@ -255,6 +255,40 @@ export class CommentResolver extends RepositoryInjector {
     )
 
     return active
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(() => Boolean)
+  async saveComment(
+    @Arg('commentId', () => ID) commentId: string,
+    @Ctx() { userId }: Context
+  ) {
+    await this.userRepository
+      .createQueryBuilder()
+      .relation(User, 'savedComments')
+      .of(userId)
+      .remove(commentId)
+
+    await this.userRepository
+      .createQueryBuilder()
+      .relation(User, 'savedComments')
+      .of(userId)
+      .add(commentId)
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(() => Boolean)
+  async unsaveComment(
+    @Arg('commentId', () => ID) commentId: string,
+    @Ctx() { userId }: Context
+  ) {
+    await this.userRepository
+      .createQueryBuilder()
+      .relation(User, 'savedComments')
+      .of(userId)
+      .remove(commentId)
+    return true
   }
 
   @FieldResolver()

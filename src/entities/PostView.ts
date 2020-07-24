@@ -18,22 +18,22 @@ import { Post } from './Post'
 @Entity()
 export class PostView {
   @ManyToOne(
-    (type) => User,
+    () => User,
     (user) => user.postViews
   )
   user: Lazy<User>
 
-  @Field((type) => ID)
+  @Field(() => ID)
   @PrimaryColumn()
   userId: string
 
   @ManyToOne(
-    (type) => Post,
+    () => Post,
     (post) => post.postViews
   )
   post: Lazy<Post>
 
-  @Field((type) => ID)
+  @Field(() => ID)
   @PrimaryColumn()
   postId: string
 

@@ -14,9 +14,9 @@ export class UserCommentsArgs extends PaginationArgs {
   @Length(3, 20)
   username: string
 
-  @Field((type) => CommentSort, { defaultValue: CommentSort.NEW })
+  @Field(() => CommentSort, { defaultValue: CommentSort.NEW })
   sort: CommentSort = CommentSort.NEW
 
-  @Field((type) => Time, { defaultValue: Time.ALL })
+  @Field(() => Time, { defaultValue: Time.ALL })
   time: Time = Time.ALL
 }

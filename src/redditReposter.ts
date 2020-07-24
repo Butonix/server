@@ -4,7 +4,6 @@ import { Comment } from './entities/Comment'
 import { Post, PostType } from './entities/Post'
 import { PostEndorsement } from './entities/PostEndorsement'
 import { CommentEndorsement } from './entities/CommentEndorsement'
-import { Topic } from './entities/Topic'
 import { PostView } from './entities/PostView'
 import { ReplyNotification } from './entities/ReplyNotification'
 import * as TypeORM from 'typeorm'
@@ -16,17 +15,7 @@ import Mercury from '@postlight/mercury-parser'
 import { getThumbnailUrl } from './thumbnail'
 import sharp from 'sharp'
 import { s3 } from './s3'
-
-const entities = [
-  User,
-  Comment,
-  Post,
-  PostEndorsement,
-  CommentEndorsement,
-  Topic,
-  PostView,
-  ReplyNotification
-]
+import { entities } from './EntitiesAndResolvers'
 
 const subreddits = [
   'programming',
@@ -51,41 +40,6 @@ const subreddits = [
   'nfl',
   'youtubehaiku'
 ]
-
-function mapPostToTopics(post: any): string[] {
-  const subreddit = post.subreddit.toLowerCase()
-  let topics = [subreddit]
-  if (subreddit === 'internetisbeautiful') topics = ['internet_is_beautiful']
-  else if (subreddit === 'worldnews') topics = ['news', 'world_news']
-  else if (subreddit === 'indieheads') topics = ['music', 'indie_music']
-  else if (subreddit === 'hiphopheads') topics = ['music', 'hip_hop_music']
-  else if (subreddit === 'gadgets') topics = ['technology', 'gadgets']
-  else if (subreddit === 'games') topics = ['gaming']
-  else if (subreddit === 'listentothis') topics = ['music']
-  else if (subreddit === 'gamedeals') topics = ['gaming', 'game_deals']
-  else if (subreddit === 'nba') topics = ['sports', 'nba']
-  else if (subreddit === 'nfl') topics = ['sports', 'nfl']
-  else if (subreddit === 'youtubehaiku') topics = ['videos', 'youtube_haiku']
-  if (post.title.toLowerCase().includes('trump'))
-    topics.push('donald_trump', 'election_2020')
-  if (post.title.toLowerCase().includes('biden'))
-    topics.push('joe_biden', 'election_2020')
-  if (post.title.toLowerCase().includes('republican'))
-    topics.push('politics', 'election_2020')
-  if (post.title.toLowerCase().includes('democrat'))
-    topics.push('politics', 'election_2020')
-  if (post.title.toLowerCase().includes('kanye')) topics.push('kanye_west')
-  if (post.title.toLowerCase().includes('psychedelic'))
-    topics.push('psychedelics')
-  if (post.title.toLowerCase().includes('lsd'))
-    topics.push('psychedelics', 'lsd')
-  if (post.title.toLowerCase().includes('shrooms'))
-    topics.push('psychedelics', 'shrooms')
-  if (post.title.toLowerCase().includes('dmt'))
-    topics.push('psychedelics', 'dmt')
-  topics = [...new Set(topics)]
-  return topics
-}
 
 async function redditReposter() {
   if (process.env.NODE_ENV !== 'production') {
@@ -264,10 +218,7 @@ async function redditReposter() {
       domain: post.domain,
       type,
       link: post.url,
-      topicsarr: mapPostToTopics(post),
-      topics: mapPostToTopics(post).map((topicName: any) => ({
-        name: topicName
-      }))
+      planet: post.subreddit
     } as Post
   })
 

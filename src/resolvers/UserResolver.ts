@@ -18,10 +18,10 @@ import { CommentSort, UserCommentsArgs } from '../args/UserCommentsArgs'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Time } from '../args/FeedArgs'
 
-@Resolver((of) => User)
+@Resolver(() => User)
 export class UserResolver extends RepositoryInjector {
-  @Query((returns) => User, { nullable: true })
-  async currentUser(@Ctx() { userId }: Context) {
+  @Query(() => User, { nullable: true })
+  async currentUser(@Ctx() { userId, req }: Context) {
     if (!userId) {
       return null
     }
@@ -35,13 +35,16 @@ export class UserResolver extends RepositoryInjector {
     if (user) {
       const lastLogin = new Date()
       user.lastLogin = lastLogin
-      this.userRepository.update(user.id, { lastLogin })
+      let ipAddresses = user.ipAddresses
+      ipAddresses.unshift(req.ip)
+      ipAddresses = [...new Set(ipAddresses)]
+      this.userRepository.update(user.id, { lastLogin, ipAddresses })
     }
 
     return user
   }
 
-  @Query((returns) => User, { nullable: true })
+  @Query(() => User, { nullable: true })
   async user(@Arg('username') username: string) {
     if (!username) return null
 
@@ -66,7 +69,7 @@ export class UserResolver extends RepositoryInjector {
       .getOne()
   }
 
-  @Query((returns) => [Comment])
+  @Query(() => [Comment])
   async userComments(
     @Args() { username, page, pageSize, sort, time }: UserCommentsArgs,
     @Ctx() { userId }: Context
@@ -137,7 +140,7 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async setProfilePicUrl(
     @Arg('profilePicUrl') profilePicUrl: string,
     @Ctx() { userId }: Context
@@ -155,7 +158,7 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async setBio(@Arg('bio') bio: string, @Ctx() { userId }: Context) {
     if (bio.length > 160) throw new Error('Bio must be 160 characters or less')
     await this.userRepository.update(userId, { bio })
@@ -163,9 +166,9 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async followUser(
-    @Arg('followedId', (type) => ID) followedId: string,
+    @Arg('followedId', () => ID) followedId: string,
     @Ctx() { userId }: Context
   ) {
     if (followedId === userId) {
@@ -182,9 +185,9 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async unfollowUser(
-    @Arg('followedId', (type) => ID) followedId: string,
+    @Arg('followedId', () => ID) followedId: string,
     @Ctx() { userId }: Context
   ) {
     if (followedId === userId) {
@@ -201,9 +204,9 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async blockUser(
-    @Arg('blockedId', (type) => ID) blockedId: string,
+    @Arg('blockedId', () => ID) blockedId: string,
     @Ctx() { userId }: Context
   ) {
     if (blockedId === userId) {
@@ -219,9 +222,9 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async unblockUser(
-    @Arg('blockedId', (type) => ID) blockedId: string,
+    @Arg('blockedId', () => ID) blockedId: string,
     @Ctx() { userId }: Context
   ) {
     if (blockedId === userId) {
@@ -237,9 +240,9 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async banUser(
-    @Arg('bannedId', (type) => ID) bannedId: string,
+    @Arg('bannedId', () => ID) bannedId: string,
     @Arg('banReason') banReason: string,
     @Ctx() { userId }: Context
   ) {
@@ -252,9 +255,9 @@ export class UserResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async unbanUser(
-    @Arg('bannedId', (type) => ID) bannedId: string,
+    @Arg('bannedId', () => ID) bannedId: string,
     @Ctx() { userId }: Context
   ) {
     const user = await this.userRepository.findOne(userId)
@@ -268,7 +271,7 @@ export class UserResolver extends RepositoryInjector {
     return true
   }
 
-  @FieldResolver((returns) => Boolean)
+  @FieldResolver(() => Boolean)
   async isFollowing(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
 
@@ -290,7 +293,7 @@ export class UserResolver extends RepositoryInjector {
     return Boolean((await user.following).length)
   }
 
-  @FieldResolver((returns) => Boolean)
+  @FieldResolver(() => Boolean)
   async isFollowed(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
 
@@ -312,7 +315,7 @@ export class UserResolver extends RepositoryInjector {
     return Boolean((await user.following).length)
   }
 
-  @FieldResolver((returns) => Boolean)
+  @FieldResolver(() => Boolean)
   async isBlocked(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
 
@@ -334,7 +337,7 @@ export class UserResolver extends RepositoryInjector {
     return Boolean((await user.blockedUsers).length)
   }
 
-  @FieldResolver((returns) => Boolean)
+  @FieldResolver(() => Boolean)
   async isBlocking(@Root() user: User, @Ctx() { userId }: Context) {
     if (!userId) return false
 
@@ -356,7 +359,7 @@ export class UserResolver extends RepositoryInjector {
     return Boolean((await user.blockedUsers).length)
   }
 
-  @FieldResolver((returns) => Boolean)
+  @FieldResolver(() => Boolean)
   async isCurrentUser(@Root() user: User, @Ctx() { userId }: Context) {
     return user.id === userId
   }

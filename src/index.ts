@@ -25,8 +25,6 @@ import { PostResolver } from './resolvers/PostResolver'
 import { UserResolver } from './resolvers/UserResolver'
 import { PostEndorsement } from './entities/PostEndorsement'
 import { CommentEndorsement } from './entities/CommentEndorsement'
-import { Topic } from './entities/Topic'
-import { TopicResolver } from './resolvers/TopicResolver'
 import { CommentResolver } from './resolvers/CommentResolver'
 import { PostView } from './entities/PostView'
 import { Filter, Sort, Time, Type } from './args/FeedArgs'
@@ -36,12 +34,14 @@ import multer from 'multer'
 import { ImageStorage } from './ImageStorage'
 import { ReplyNotification } from './entities/ReplyNotification'
 import { NotificationResolver } from './resolvers/NotificationResolver'
-import { FakeDataGenerator } from './generateFakeData'
-import { getRepository, getTreeRepository } from 'typeorm'
 // @ts-ignore
 import { avataaarEndpoint } from './avataaars/avataaarEndpoint'
 import { ProfilePicStorage } from './ProfilePicStorage'
 import { CommentSort } from './args/UserCommentsArgs'
+import { Planet } from './entities/Planet'
+import { PlanetResolver } from './resolvers/PlanetResolver'
+import { Galaxy } from './entities/Galaxy'
+import { entities, resolvers } from './EntitiesAndResolvers'
 
 // register 3rd party IOC container
 TypeORM.useContainer(Container)
@@ -64,26 +64,6 @@ if (process.env.STAGING === 'true') {
 }
 
 async function bootstrap() {
-  const entities = [
-    User,
-    Comment,
-    Post,
-    PostEndorsement,
-    CommentEndorsement,
-    Topic,
-    PostView,
-    ReplyNotification
-  ]
-  const resolvers = [
-    PostResolver,
-    UserResolver,
-    AuthResolver,
-    TopicResolver,
-    CommentResolver,
-    FiltersResolver,
-    NotificationResolver
-  ]
-
   try {
     if (process.env.NODE_ENV !== 'production') {
       // DEV
@@ -271,20 +251,6 @@ async function bootstrap() {
     app.listen({ port: process.env.PORT || 4000 }, () => {
       console.log(`Server ready at http://localhost:4000${server.graphqlPath}`)
     })
-
-    if (
-      (process.env.NODE_ENV !== 'production' ||
-        process.env.STAGING === 'true') &&
-      generateFakeData
-    ) {
-      await new FakeDataGenerator().generateFakeData(
-        1000,
-        getRepository(User),
-        getRepository(Post),
-        getRepository(Topic),
-        getTreeRepository(Comment)
-      )
-    }
   } catch (e) {
     console.error(e)
   }

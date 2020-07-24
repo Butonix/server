@@ -14,7 +14,7 @@ import { Context } from '../Context'
 
 @Resolver()
 export class NotificationResolver extends RepositoryInjector {
-  @Query((returns) => [ReplyNotification])
+  @Query(() => [ReplyNotification])
   async notifications(
     @Arg('unreadOnly', { defaultValue: false }) unreadOnly: boolean,
     @Ctx() { userId }: Context
@@ -43,9 +43,9 @@ export class NotificationResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async markNotificationRead(
-    @Arg('id', (type) => ID) id: string,
+    @Arg('id', () => ID) id: string,
     @Ctx() { userId }: Context
   ) {
     await this.replyNotifRepository
@@ -59,7 +59,7 @@ export class NotificationResolver extends RepositoryInjector {
   }
 
   @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
+  @Mutation(() => Boolean)
   async markAllNotificationsRead(@Ctx() { userId }: Context) {
     await this.replyNotifRepository
       .createQueryBuilder()

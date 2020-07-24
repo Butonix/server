@@ -5,20 +5,25 @@ import { Repository, TreeRepository } from 'typeorm'
 import { Comment } from './entities/Comment'
 import { PostEndorsement } from './entities/PostEndorsement'
 import { CommentEndorsement } from './entities/CommentEndorsement'
-import { Topic } from './entities/Topic'
 import { PostView } from './entities/PostView'
 import { ReplyNotification } from './entities/ReplyNotification'
+import { Planet } from './entities/Planet'
+import { Galaxy } from './entities/Galaxy'
 
 export class RepositoryInjector {
-  @InjectRepository(Comment) readonly commentRepository: TreeRepository<Comment>
-  @InjectRepository(Post) readonly postRepository: Repository<Post>
   @InjectRepository(User) readonly userRepository: Repository<User>
+
+  @InjectRepository(Post) readonly postRepository: Repository<Post>
+  @InjectRepository(PostView) readonly postViewRepository: Repository<PostView>
   @InjectRepository(PostEndorsement)
   readonly postEndorsementRepository: Repository<PostEndorsement>
+
+  @InjectRepository(Comment) readonly commentRepository: TreeRepository<Comment>
   @InjectRepository(CommentEndorsement)
   readonly commentEndorsementRepository: Repository<CommentEndorsement>
-  @InjectRepository(Topic) readonly topicRepository: Repository<Topic>
-  @InjectRepository(PostView) readonly postViewRepository: Repository<PostView>
   @InjectRepository(ReplyNotification)
   readonly replyNotifRepository: Repository<ReplyNotification>
+
+  @InjectRepository(Planet) readonly planetRepository: Repository<Planet>
+  @InjectRepository(Galaxy) readonly galaxyRepository: Repository<Galaxy>
 }

@@ -1,3 +1,4 @@
+/*
 // @ts-ignore
 import Url from 'url-parse'
 import { User } from './entities/User'
@@ -106,3 +107,4 @@ export class FakeDataGenerator {
       )
   }
 }
+*/

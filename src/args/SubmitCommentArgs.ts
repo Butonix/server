@@ -7,9 +7,9 @@ export class SubmitCommentArgs {
   @Length(1, 10000)
   textContent: string
 
-  @Field((type) => ID)
+  @Field(() => ID)
   postId: string
 
-  @Field((type) => ID, { nullable: true })
+  @Field(() => ID, { nullable: true })
   parentCommentId?: string
 }

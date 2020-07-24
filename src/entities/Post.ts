@@ -1,18 +1,11 @@
 import { Field, ID, ObjectType } from 'type-graphql'
-import {
-  Column,
-  Entity,
-  ManyToMany,
-  ManyToOne,
-  OneToMany,
-  PrimaryColumn
-} from 'typeorm'
+import { Column, Entity, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm'
 import { Comment } from './Comment'
 import { Lazy } from '../lazy'
 import { User } from './User'
 import { PostEndorsement } from './PostEndorsement'
-import { Topic } from './Topic'
 import { PostView } from './PostView'
+import { Planet } from './Planet'
 
 export enum PostType {
   TEXT = 'TEXT',
@@ -23,7 +16,7 @@ export enum PostType {
 @ObjectType()
 @Entity()
 export class Post {
-  @Field((type) => ID)
+  @Field(() => ID)
   @PrimaryColumn('varchar', { length: 20 })
   id: string
 
@@ -31,7 +24,7 @@ export class Post {
   @Column()
   title: string
 
-  @Field((type) => String, { nullable: true })
+  @Field(() => String, { nullable: true })
   @Column('text', { nullable: true })
   textContent?: string
 
@@ -39,18 +32,18 @@ export class Post {
   @Column({ nullable: true })
   link?: string
 
-  @Field((type) => User, { nullable: true })
+  @Field(() => User, { nullable: true })
   @ManyToOne(
-    (type) => User,
+    () => User,
     (user) => user.posts
   )
   author: Lazy<User>
 
-  @Field((type) => ID)
+  @Field(() => ID)
   @Column({ nullable: true })
   authorId: string
 
-  @Field((type) => PostType)
+  @Field(() => PostType)
   @Column({
     type: 'enum',
     enum: PostType
@@ -70,7 +63,7 @@ export class Post {
   sticky: boolean
 
   @OneToMany(
-    (type) => Comment,
+    () => Comment,
     (comment) => comment.post
   )
   comments: Lazy<Comment[]>
@@ -79,18 +72,15 @@ export class Post {
   @Column({ default: 0 })
   commentCount: number
 
-  @Field((type) => [Topic])
-  @ManyToMany(
-    (type) => Topic,
-    (topic) => topic.posts
+  @Field(() => Planet)
+  @ManyToOne(
+    () => Planet,
+    (planet) => planet.posts
   )
-  topics: Lazy<Topic[]>
-
-  @Column('text', { array: true })
-  topicsarr: string[]
+  planet: Lazy<Planet>
 
   @OneToMany(
-    (type) => PostEndorsement,
+    () => PostEndorsement,
     (endorsement) => endorsement.post
   )
   endorsements: Lazy<PostEndorsement[]>
@@ -102,7 +92,7 @@ export class Post {
   personalEndorsementCount = 0
 
   @OneToMany(
-    (type) => PostView,
+    () => PostView,
     (postView) => postView.post
   )
   postViews: Lazy<PostView[]>
@@ -121,15 +111,8 @@ export class Post {
   @Column({ nullable: true })
   domain?: string
 
-  @Field()
-  authorIsCurrentUser: boolean
-
   @Column({ default: false })
   deleted: boolean
-
-  @Field()
-  @Column({ default: false })
-  reported: boolean
 
   @Field({ nullable: true })
   postView: PostView

@@ -30,20 +30,20 @@ export enum Type {
 
 @ArgsType()
 export class FeedArgs extends PaginationArgs {
-  @Field((type) => Sort, { defaultValue: Sort.HOT })
+  @Field(() => Sort, { defaultValue: Sort.HOT })
   sort: Sort = Sort.HOT
 
-  @Field((type) => Time, { defaultValue: Time.ALL })
+  @Field(() => Time, { defaultValue: Time.ALL })
   time: Time = Time.ALL
 
-  @Field((type) => Filter, { defaultValue: Filter.ALL })
+  @Field(() => Filter, { defaultValue: Filter.ALL })
   filter: Filter = Filter.ALL
 
-  @Field((type) => [Type], { defaultValue: [] })
+  @Field(() => [Type], { defaultValue: [] })
   types: Type[]
 
   @Field({ nullable: true })
-  topicName?: string
+  planetName?: string
 
   @Field({ nullable: true })
   username?: string

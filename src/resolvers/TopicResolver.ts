@@ -1,46 +1,10 @@
-import {
-  Arg,
-  Args,
-  Ctx,
-  FieldResolver,
-  ID,
-  Mutation,
-  Query,
-  Resolver,
-  Root,
-  UseMiddleware
-} from 'type-graphql'
-import { Topic } from '../entities/Topic'
-import { RequiresAuth } from '../RequiresAuth'
-import { Context } from '../Context'
-import { User } from '../entities/User'
+import { Resolver } from 'type-graphql'
 import { RepositoryInjector } from '../RepositoryInjector'
-import { Like } from 'typeorm'
-import { PaginationArgs } from '../args/PaginationArgs'
-import { Post } from '../entities/Post'
-import { FeedArgs, Filter, Sort, Time, Type } from '../args/FeedArgs'
-import { TopicFeedArgs } from '../args/TopicFeedArgs'
+import { Planet } from '../entities/Planet'
 
-@Resolver((of) => Topic)
+@Resolver(() => Planet)
 export class TopicResolver extends RepositoryInjector {
-  @Query((returns) => Topic, { nullable: true })
-  async topic(@Arg('topicName', (type) => ID) topicName: string) {
-    return this.topicRepository
-      .createQueryBuilder('topic')
-      .andWhere('topic.name ILIKE :topicName', { topicName })
-      .loadRelationCountAndMap(
-        'topic.postCount',
-        'topic.posts',
-        'post',
-        (qb) => {
-          return qb.andWhere('post.deleted = false')
-        }
-      )
-      .loadRelationCountAndMap('topic.followerCount', 'topic.followers')
-      .getOne()
-  }
-
-  @Query((returns) => [Topic])
+  /*@Query(() => [Topic])
   async popularTopics() {
     const topics = await this.topicRepository
       .createQueryBuilder('topic')
@@ -59,9 +23,8 @@ export class TopicResolver extends RepositoryInjector {
     topics.forEach((topic) => (topic.postCount = topic.total))
 
     return topics
-  }
-
-  @Query((returns) => [Topic])
+  }*/
+  /*@Query(() => [Topic])
   async searchTopics(@Arg('search') search: string) {
     if (!search) return []
 
@@ -72,9 +35,8 @@ export class TopicResolver extends RepositoryInjector {
       })
       .take(10)
       .getMany()
-  }
-
-  @Query((returns) => [Topic])
+  }*/
+  /*@Query(() => [Topic])
   async followedTopics(@Ctx() { userId }: Context) {
     if (!userId) return []
 
@@ -103,119 +65,5 @@ export class TopicResolver extends RepositoryInjector {
       .getMany()
 
     return topics
-  }
-
-  @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
-  async followTopic(
-    @Arg('topicName', (type) => ID) topicName: string,
-    @Ctx() { userId }: Context
-  ) {
-    await this.userRepository
-      .createQueryBuilder()
-      .relation(User, 'followedTopics')
-      .of(userId)
-      .add(topicName)
-    return true
-  }
-
-  @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
-  async unfollowTopic(
-    @Arg('topicName', (type) => ID) topicName: string,
-    @Ctx() { userId }: Context
-  ) {
-    await this.userRepository
-      .createQueryBuilder()
-      .relation(User, 'followedTopics')
-      .of(userId)
-      .remove(topicName)
-    return true
-  }
-
-  @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
-  async hideTopic(
-    @Arg('topicName', (type) => ID) topicName: string,
-    @Ctx() { userId }: Context
-  ) {
-    await this.userRepository
-      .createQueryBuilder()
-      .relation(User, 'followedTopics')
-      .of(userId)
-      .remove(topicName)
-
-    await this.userRepository
-      .createQueryBuilder()
-      .relation(User, 'hiddenTopics')
-      .of(userId)
-      .add(topicName)
-    return true
-  }
-
-  @UseMiddleware(RequiresAuth)
-  @Mutation((returns) => Boolean)
-  async unhideTopic(
-    @Arg('topicName', (type) => ID) topicName: string,
-    @Ctx() { userId }: Context
-  ) {
-    await this.userRepository
-      .createQueryBuilder()
-      .relation(User, 'hiddenTopics')
-      .of(userId)
-      .remove(topicName)
-    return true
-  }
-
-  @FieldResolver()
-  capitalizedName(@Root() topic: Topic) {
-    if (topic.customName) return topic.customName
-    return topic.name
-      .replace(/_/g, ' ')
-      .split(' ')
-      .map(
-        (word) => word.charAt(0).toUpperCase() + word.substring(1).toLowerCase()
-      )
-      .join(' ')
-  }
-
-  @FieldResolver()
-  async isFollowing(@Root() topic: Topic, @Ctx() { userId }: Context) {
-    if (!userId) return false
-
-    const user = await this.userRepository
-      .createQueryBuilder('user')
-      .where('user.id = :userId', { userId: userId })
-      .leftJoinAndSelect(
-        'user.followedTopics',
-        'followedTopic',
-        'followedTopic.name = :name',
-        {
-          name: topic.name
-        }
-      )
-      .getOne()
-
-    return Boolean((await user.followedTopics).length)
-  }
-
-  @FieldResolver()
-  async isHidden(@Root() topic: Topic, @Ctx() { userId }: Context) {
-    if (!userId) return false
-
-    const user = await this.userRepository
-      .createQueryBuilder('user')
-      .where('user.id = :userId', { userId: userId })
-      .leftJoinAndSelect(
-        'user.hiddenTopics',
-        'hiddenTopic',
-        'hiddenTopic.name = :name',
-        {
-          name: topic.name
-        }
-      )
-      .getOne()
-
-    return Boolean((await user.hiddenTopics).length)
-  }
+  }*/
 }

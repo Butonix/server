@@ -18,22 +18,22 @@ import { Post } from './Post'
 @Entity()
 export class CommentEndorsement {
   @ManyToOne(
-    (type) => User,
+    () => User,
     (user) => user.posts
   )
   user: Lazy<User>
 
-  @Field((type) => ID)
+  @Field(() => ID)
   @PrimaryColumn()
   userId: string
 
   @ManyToOne(
-    (type) => Comment,
+    () => Comment,
     (comment) => comment.endorsements
   )
   comment: Lazy<Comment>
 
-  @Field((type) => ID)
+  @Field(() => ID)
   @PrimaryColumn()
   commentId: string
 
