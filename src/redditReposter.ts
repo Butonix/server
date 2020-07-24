@@ -1,11 +1,6 @@
 import axios from 'axios'
 import { User } from './entities/User'
-import { Comment } from './entities/Comment'
 import { Post, PostType } from './entities/Post'
-import { PostEndorsement } from './entities/PostEndorsement'
-import { CommentEndorsement } from './entities/CommentEndorsement'
-import { PostView } from './entities/PostView'
-import { ReplyNotification } from './entities/ReplyNotification'
 import * as TypeORM from 'typeorm'
 import { getRepository } from 'typeorm'
 import * as argon2 from 'argon2'
@@ -42,6 +37,7 @@ const subreddits = [
 ]
 
 async function redditReposter() {
+  return
   if (process.env.NODE_ENV !== 'production') {
     // DEV
     await TypeORM.createConnection({
@@ -84,7 +80,6 @@ async function redditReposter() {
 
   const userRepository = getRepository(User)
   const postRepository = getRepository(Post)
-  const topicRepository = getRepository(Topic)
 
   let cometBot = await userRepository.findOne({ username: 'Comet' })
   if (!cometBot) {
@@ -122,18 +117,6 @@ async function redditReposter() {
 
   redditPosts = redditPosts.filter(
     (post: any) => !alreadySavedPostsIds.includes(post.id)
-  )
-
-  let topicsToSave: any[] = []
-  redditPosts.forEach((post: any) => {
-    const mappedTopics = mapPostToTopics(post).map((topicName: any) => ({
-      name: topicName
-    }))
-    topicsToSave.push(...mappedTopics)
-  })
-  topicsToSave = topicsToSave.filter(
-    (topic, index, self) =>
-      index === self.findIndex((t) => t.name === topic.name)
   )
 
   const postsToSave = await redditPosts.map(async (post: any) => {
@@ -222,7 +205,6 @@ async function redditReposter() {
     } as Post
   })
 
-  await topicRepository.save(topicsToSave)
   await postRepository.save(await Promise.all(postsToSave))
 }
 
