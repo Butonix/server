@@ -43,9 +43,7 @@ export const getThumbnailUrl = async (link: string, timeout = 3000) => {
       for (const img of imgs) {
         if (!img.attrs.src) continue
         let src = img.attrs.src
-        if (src.startsWith('https://')) {
-          src = src
-        } else if (src.startsWith('http://')) {
+        if (src.startsWith('http://')) {
           src = `https://${src.split('http://')[1]}`
         } else if (src.startsWith('//')) {
           src = `https:${src}`

@@ -7,16 +7,16 @@ import { Planet } from '../entities/Planet'
 @Resolver()
 export class FiltersResolver extends RepositoryInjector {
   @Query(() => [Planet])
-  async filteredPlanets(@Ctx() { userId }: Context) {
+  async blockedPlanets(@Ctx() { userId }: Context) {
     if (!userId) return []
 
     const planets = await this.userRepository
       .createQueryBuilder()
-      .relation(User, 'filteredPlanets')
+      .relation(User, 'blockedPlanets')
       .of(userId)
       .loadMany()
 
-    planets.forEach((planet) => (planet.isHidden = true))
+    planets.forEach((planet) => (planet.blocking = true))
 
     return planets
   }

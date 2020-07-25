@@ -1,15 +1,5 @@
 import { Field, ID, ObjectType } from 'type-graphql'
-import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  OneToMany,
-  PrimaryColumn,
-  PrimaryGeneratedColumn
-} from 'typeorm'
-import { Comment } from './Comment'
+import { Column, Entity, ManyToOne, PrimaryColumn } from 'typeorm'
 import { Lazy } from '../lazy'
 import { User } from './User'
 import { Post } from './Post'

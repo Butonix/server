@@ -16,10 +16,7 @@ export class AuthResolver {
   @InjectRepository(User) readonly userRepository: Repository<User>
 
   @Mutation(() => LoginResponse)
-  async signUp(
-    @Args() { username, password, email }: SignUpArgs,
-    @Ctx() { req, res }: Context
-  ) {
+  async signUp(@Args() { username, password, email }: SignUpArgs) {
     if (
       username.toLowerCase() === 'null' ||
       username.toLowerCase() === 'undefined'
@@ -50,10 +47,7 @@ export class AuthResolver {
   }
 
   @Mutation(() => LoginResponse)
-  async login(
-    @Args() { username, password }: LoginArgs,
-    @Ctx() { req, res }: Context
-  ) {
+  async login(@Args() { username, password }: LoginArgs) {
     const user = await this.userRepository.findOne({
       where: `"username" ILIKE '${username.replace(/_/g, '\\_')}'`
     })

@@ -72,12 +72,17 @@ export class Post {
   @Column({ default: 0 })
   commentCount: number
 
-  @Field(() => Planet)
+  @Field(() => Planet, { nullable: true })
   @ManyToOne(
     () => Planet,
-    (planet) => planet.posts
+    (planet) => planet.posts,
+    { cascade: true, nullable: true }
   )
   planet: Lazy<Planet>
+
+  @Field()
+  @Column({ default: false })
+  postedToProfile: boolean
 
   @OneToMany(
     () => PostEndorsement,

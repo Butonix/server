@@ -45,7 +45,7 @@ export class PostResolver extends RepositoryInjector {
   @Query(() => String)
   async getTitleAtUrl(@Arg('url') url: string) {
     if (!isUrl(url)) return ''
-    let result = ''
+    let result
     try {
       result = await new Promise((resolve, reject) =>
         request(url, function(error, response, body) {
@@ -171,7 +171,7 @@ export class PostResolver extends RepositoryInjector {
       )
     }
 
-    const posts = await qb.leftJoinAndSelect('post.topics', 'topic').getMany()
+    const posts = await qb.leftJoinAndSelect('post.planet', 'planet').getMany()
 
     posts.forEach(
       (post) => (post.isEndorsed = Boolean(post.personalEndorsementCount))
@@ -266,13 +266,13 @@ export class PostResolver extends RepositoryInjector {
         .createQueryBuilder('user')
         .whereInIds(userId)
         .leftJoinAndSelect('user.planets', 'planets')
-        .leftJoinAndSelect('user.filteredPlanets', 'filteredPlanets')
+        .leftJoinAndSelect('user.blockedPlanets', 'blockedPlanets')
         .leftJoinAndSelect('user.blockedUsers', 'blockedUsers')
         .leftJoinAndSelect('user.hiddenPosts', 'hiddenPosts')
         .getOne()
 
       if (user) {
-        const filteredPlanets = (await user.filteredPlanets).map(
+        const blockedPlanets = (await user.blockedPlanets).map(
           (planet) => planet.name
         )
         const blockedUsers = (await user.blockedUsers).map((user) => user.id)
@@ -285,9 +285,9 @@ export class PostResolver extends RepositoryInjector {
           }
         }
 
-        if (filteredPlanets.length > 0) {
-          qb.andWhere('NOT (post.planet = ANY(:filteredPlanets))', {
-            filteredPlanets
+        if (blockedPlanets.length > 0) {
+          qb.andWhere('NOT (post.planet = ANY(:blockedPlanets))', {
+            blockedPlanets
           })
         }
 
@@ -351,7 +351,7 @@ export class PostResolver extends RepositoryInjector {
       }
     )
 
-    posts = await qb.leftJoinAndSelect('post.topics', 'topic').getMany()
+    posts = await qb.leftJoinAndSelect('post.planet', 'planet').getMany()
 
     posts.forEach((post) => {
       post.isEndorsed = Boolean(post.personalEndorsementCount)
@@ -383,7 +383,7 @@ export class PostResolver extends RepositoryInjector {
       )
     }
 
-    const post = await qb.leftJoinAndSelect('post.topics', 'topic').getOne()
+    const post = await qb.leftJoinAndSelect('post.planet', 'planet').getOne()
 
     if (!post) return null
 

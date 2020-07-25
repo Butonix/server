@@ -10,7 +10,7 @@ import {
 } from 'typeorm'
 import { Lazy } from '../lazy'
 import { User } from './User'
-import { Post, PostType } from './Post'
+import { Post } from './Post'
 import { Galaxy } from './Galaxy'
 import { Sort } from '../args/FeedArgs'
 import { CommentSort } from '../args/UserCommentsArgs'
@@ -22,7 +22,7 @@ export class Planet {
   @PrimaryColumn()
   name: string
 
-  @Field()
+  @Field({ nullable: true })
   @Column('text', { nullable: true })
   fullName?: string
 
@@ -70,12 +70,13 @@ export class Planet {
   @JoinTable()
   moderators: Lazy<User[]>
 
-  @ManyToMany(
+  @Field(() => Galaxy)
+  @ManyToOne(
     () => Galaxy,
     (galaxy) => galaxy.planets,
     { cascade: true }
   )
-  galaxies: Lazy<Galaxy[]>
+  galaxy: Lazy<Galaxy>
 
   @Field()
   @Column({ default: true })
@@ -105,9 +106,27 @@ export class Planet {
   })
   defaultCommentSort: CommentSort
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  avatarImageUrl?: string
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  cardImageUrl?: string
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  themeColor?: string
+
   @Field()
-  filtered: boolean
+  blocking: boolean
 
   @Field()
   joined: boolean
+
+  @Field()
+  postCount: number
+
+  @Column('int', { select: false, default: 0 })
+  total: number
 }

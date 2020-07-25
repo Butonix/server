@@ -121,7 +121,7 @@ async function redditReposter() {
 
   const postsToSave = await redditPosts.map(async (post: any) => {
     let parseResult: any = null
-    let type = PostType.LINK
+    let type
     let thumbnailUrl =
       post.thumbnail &&
       typeof post.thumbnail === 'string' &&
@@ -162,8 +162,6 @@ async function redditReposter() {
     }
 
     if (!thumbnailUrl && parseResult && parseResult.lead_image_url) {
-      let s3UploadLink = ''
-
       const response = await axios.get(parseResult.lead_image_url, {
         responseType: 'arraybuffer'
       })
@@ -175,7 +173,7 @@ async function redditReposter() {
         .jpeg()
         .toBuffer()
 
-      s3UploadLink = await new Promise((resolve, reject) =>
+      thumbnailUrl = await new Promise((resolve, reject) =>
         s3.upload(
           {
             Bucket: 'i.getcomet.net',
@@ -189,7 +187,6 @@ async function redditReposter() {
           }
         )
       )
-      thumbnailUrl = s3UploadLink
     }
 
     return {
@@ -201,7 +198,7 @@ async function redditReposter() {
       domain: post.domain,
       type,
       link: post.url,
-      planet: post.subreddit
+      planet: { name: post.subreddit }
     } as Post
   })
 

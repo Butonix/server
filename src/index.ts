@@ -3,10 +3,8 @@ import 'newrelic'
 import 'reflect-metadata'
 import * as path from 'path'
 import { buildSchema, registerEnumType } from 'type-graphql'
-import { User } from './entities/User'
 import * as TypeORM from 'typeorm'
 import { Container } from 'typedi'
-import { Comment } from './entities/Comment'
 import { getUser } from './auth'
 import express from 'express'
 import cors from 'cors'
@@ -19,28 +17,15 @@ import {
   PostViewLoader,
   UserLoader
 } from './loaders'
-import { Post, PostType } from './entities/Post'
-import { AuthResolver } from './resolvers/AuthResolver'
-import { PostResolver } from './resolvers/PostResolver'
-import { UserResolver } from './resolvers/UserResolver'
-import { PostEndorsement } from './entities/PostEndorsement'
-import { CommentEndorsement } from './entities/CommentEndorsement'
-import { CommentResolver } from './resolvers/CommentResolver'
-import { PostView } from './entities/PostView'
+import { PostType } from './entities/Post'
 import { Filter, Sort, Time, Type } from './args/FeedArgs'
-import { FiltersResolver } from './resolvers/FiltersResolver'
 import aws from 'aws-sdk'
 import multer from 'multer'
 import { ImageStorage } from './ImageStorage'
-import { ReplyNotification } from './entities/ReplyNotification'
-import { NotificationResolver } from './resolvers/NotificationResolver'
 // @ts-ignore
 import { avataaarEndpoint } from './avataaars/avataaarEndpoint'
 import { ProfilePicStorage } from './ProfilePicStorage'
 import { CommentSort } from './args/UserCommentsArgs'
-import { Planet } from './entities/Planet'
-import { PlanetResolver } from './resolvers/PlanetResolver'
-import { Galaxy } from './entities/Galaxy'
 import { entities, resolvers } from './EntitiesAndResolvers'
 
 // register 3rd party IOC container
@@ -50,18 +35,6 @@ aws.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY,
   secretAccessKey: process.env.AWS_SECRET_KEY
 })
-
-let generateFakeData = false
-if (process.env.STAGING === 'true') {
-  // STAGING
-  generateFakeData = true
-} else if (process.env.NODE_ENV === 'production' && !process.env.STAGING) {
-  // PROD
-  generateFakeData = false
-} else if (process.env.NODE_ENV !== 'production') {
-  // DEV
-  generateFakeData = false // edit this for dev
-}
 
 async function bootstrap() {
   try {
@@ -77,7 +50,7 @@ async function bootstrap() {
         entities,
         synchronize: true,
         logging: true,
-        dropSchema: generateFakeData, // CLEARS DATABASE ON START
+        dropSchema: false, // CLEARS DATABASE ON START
         cache: true
       })
     } else if (process.env.NODE_ENV === 'production' && !process.env.STAGING) {
@@ -204,11 +177,11 @@ async function bootstrap() {
           else next()
         })
       },
-      (req: any, res: any, next: any) => {
+      (req: any, res: any) => {
         // @ts-ignore
         return res.send({ link: req.file.location })
       },
-      (err: any, req: any, res: any, next: any) => {
+      (err: any, req: any, res: any) => {
         res.send({ error: err.message })
       }
     )
@@ -237,11 +210,11 @@ async function bootstrap() {
           else next()
         })
       },
-      (req: any, res: any, next: any) => {
+      (req: any, res: any) => {
         // @ts-ignore
         return res.send({ link: req.file.location })
       },
-      (err: any, req: any, res: any, next: any) => {
+      (err: any, req: any, res: any) => {
         res.send({ error: err.message })
       }
     )

@@ -1,5 +1,5 @@
 import { ArgsType, Field, ID } from 'type-graphql'
-import { Sort, Time } from './FeedArgs'
+import { Sort } from './FeedArgs'
 
 @ArgsType()
 export class PostCommentsArgs {

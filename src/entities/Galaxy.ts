@@ -11,8 +11,12 @@ export class Galaxy {
   name: string
 
   @Field()
-  @Column('text', { nullable: true })
-  fullName?: string
+  @Column()
+  fullName: string
+
+  @Field()
+  @Column()
+  icon: string
 
   @Field({ nullable: true })
   @Column('text', { nullable: true })
@@ -20,7 +24,7 @@ export class Galaxy {
 
   @ManyToMany(
     () => Planet,
-    (planet) => planet.galaxies
+    (planet) => planet.galaxy
   )
   @JoinTable()
   planets: Lazy<Planet[]>

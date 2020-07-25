@@ -24,7 +24,7 @@ export class PlanetResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(() => Boolean)
   async createPlanet(
-    @Args() { name, description, galaxies }: CreatePlanetArgs,
+    @Args() { name, description, galaxy }: CreatePlanetArgs,
     @Ctx() { userId }: Context
   ) {
     if (await this.planetExists(name)) throw new Error('Planet already exists')
@@ -37,22 +37,14 @@ export class PlanetResolver extends RepositoryInjector {
     if ((await user.moderatedPlanets).length >= 10)
       throw new Error('Cannot moderate more than 10 planets')
 
-    for (const galaxy of galaxies) {
-      if (!galaxiesList.map((g) => g.name).includes(galaxy))
-        throw new Error('Invalid galaxy: ' + galaxy)
-    }
+    if (!galaxiesList.map((g) => g.name).includes(galaxy))
+      throw new Error('Invalid galaxy: ' + galaxy)
 
     await this.planetRepository.save({
       name,
       fullName: name,
       description,
-      galaxies: galaxies.map(
-        (g) =>
-          ({
-            name: g,
-            fullName: galaxiesList.find((ga) => ga.name === g).fullName
-          } as Galaxy)
-      ),
+      galaxy: galaxiesList.find((ga) => ga.name === galaxy),
       createdAt: new Date(),
       creatorId: userId,
       moderators: [{ id: userId }]
@@ -71,7 +63,7 @@ export class PlanetResolver extends RepositoryInjector {
 
   @Query(() => [Galaxy])
   galaxies() {
-    return this.galaxyRepository.find()
+    return galaxiesList
   }
 
   @Query(() => Planet, { nullable: true })
@@ -81,6 +73,7 @@ export class PlanetResolver extends RepositoryInjector {
       .andWhere('planet.name ILIKE :planetName', { planetName })
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
       .leftJoinAndSelect('planet.moderators', 'moderator')
+      .leftJoinAndSelect('planet.galaxy', 'galaxy')
       .getOne()
   }
 
@@ -114,7 +107,7 @@ export class PlanetResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(() => Boolean)
-  async filterPlanet(
+  async blockPlanet(
     @Arg('planetName', () => ID) planetName: string,
     @Ctx() { userId }: Context
   ) {
@@ -126,7 +119,7 @@ export class PlanetResolver extends RepositoryInjector {
 
     await this.userRepository
       .createQueryBuilder()
-      .relation(User, 'filteredPlanets')
+      .relation(User, 'blockedPlanets')
       .of(userId)
       .add(planetName)
     return true
@@ -134,16 +127,37 @@ export class PlanetResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(() => Boolean)
-  async unfilterPlanet(
+  async unblockPlanet(
     @Arg('planetName', () => ID) planetName: string,
     @Ctx() { userId }: Context
   ) {
     await this.userRepository
       .createQueryBuilder()
-      .relation(User, 'filteredPlanets')
+      .relation(User, 'blockedPlanets')
       .of(userId)
       .remove(planetName)
     return true
+  }
+
+  @Query(() => [Planet])
+  async popularPlanets() {
+    const planets = await this.planetRepository
+      .createQueryBuilder('planet')
+      .addSelect('COUNT(posts.id)', 'planet_total')
+      .leftJoin(
+        'planet.posts',
+        'posts',
+        "posts.deleted = false AND posts.createdAt > NOW() - INTERVAL '1 day'"
+      )
+      .groupBy('planet.name')
+      .orderBy('planet_total', 'DESC')
+      .having('COUNT(posts.id) > 0')
+      .take(10)
+      .getMany()
+
+    planets.forEach((planet) => (planet.postCount = planet.total))
+
+    return planets
   }
 
   @FieldResolver()
@@ -162,22 +176,22 @@ export class PlanetResolver extends RepositoryInjector {
   }
 
   @FieldResolver()
-  async filtered(@Root() planet: Planet, @Ctx() { userId }: Context) {
+  async blocking(@Root() planet: Planet, @Ctx() { userId }: Context) {
     if (!userId) return false
 
     const user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: userId })
       .leftJoinAndSelect(
-        'user.filteredPlanets',
-        'filteredPlanet',
-        'filteredPlanet.name = :name',
+        'user.blockedPlanets',
+        'blockedPlanet',
+        'blockedPlanet.name = :name',
         {
           name: planet.name
         }
       )
       .getOne()
 
-    return Boolean((await user.filteredPlanets).length)
+    return Boolean((await user.blockedPlanets).length)
   }
 }

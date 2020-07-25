@@ -9,11 +9,13 @@ export class CreatePlanetArgs {
   name: string
 
   @Field()
+  @Length(1, 50)
+  fullName: string
+
+  @Field()
   @Length(1, 50000)
   description: string
 
-  @Field(() => [String])
-  @ArrayMinSize(1)
-  @ArrayMaxSize(3)
-  galaxies: string[]
+  @Field()
+  galaxy: string
 }

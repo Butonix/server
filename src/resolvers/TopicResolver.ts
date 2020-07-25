@@ -1,29 +1,9 @@
-import { Resolver } from 'type-graphql'
+import { Query, Resolver } from 'type-graphql'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Planet } from '../entities/Planet'
 
 @Resolver(() => Planet)
 export class TopicResolver extends RepositoryInjector {
-  /*@Query(() => [Topic])
-  async popularTopics() {
-    const topics = await this.topicRepository
-      .createQueryBuilder('topic')
-      .addSelect('COUNT(posts.id)', 'topic_total')
-      .leftJoin(
-        'topic.posts',
-        'posts',
-        "posts.deleted = false AND posts.createdAt > NOW() - INTERVAL '1 day'"
-      )
-      .groupBy('topic.name')
-      .orderBy('topic_total', 'DESC')
-      .having('COUNT(posts.id) > 0')
-      .take(10)
-      .getMany()
-
-    topics.forEach((topic) => (topic.postCount = topic.total))
-
-    return topics
-  }*/
   /*@Query(() => [Topic])
   async searchTopics(@Arg('search') search: string) {
     if (!search) return []
