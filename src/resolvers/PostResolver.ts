@@ -401,6 +401,7 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @Mutation(() => PostView, { nullable: true })
+  @UseMiddleware(RequiresAuth)
   async recordPostView(
     @Arg('postId', () => ID) postId: string,
     @Ctx() { userId }: Context

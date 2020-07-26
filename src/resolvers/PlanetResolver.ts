@@ -154,7 +154,7 @@ export class PlanetResolver extends RepositoryInjector {
       .groupBy('planet.name')
       .orderBy('planet_total', 'DESC')
       .having('COUNT(posts.id) > 0')
-      .take(10)
+      .take(5)
       .getMany()
 
     planets.forEach((planet) => (planet.postCount = planet.total))
