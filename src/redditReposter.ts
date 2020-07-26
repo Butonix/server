@@ -164,27 +164,29 @@ async function redditReposter() {
       const response = await axios.get(parseResult.lead_image_url, {
         responseType: 'arraybuffer'
       })
-      const resizedImage = await sharp(response.data)
-        .resize(80, 60, {
-          background: { r: 0, g: 0, b: 0, alpha: 0 }
-        })
-        .jpeg()
-        .toBuffer()
+      try {
+        const resizedImage = await sharp(response.data)
+          .resize(80, 60, {
+            background: { r: 0, g: 0, b: 0, alpha: 0 }
+          })
+          .jpeg()
+          .toBuffer()
 
-      thumbnailUrl = await new Promise((resolve, reject) =>
-        s3.upload(
-          {
-            Bucket: 'i.getcomet.net',
-            Key: `thumbs/${post.id}.jpg`,
-            Body: resizedImage,
-            ContentType: 'image/jpeg'
-          },
-          (err, data) => {
-            if (err) reject(err)
-            else resolve(data.Location.replace('s3.amazonaws.com/', ''))
-          }
+        thumbnailUrl = await new Promise((resolve, reject) =>
+          s3.upload(
+            {
+              Bucket: 'i.getcomet.net',
+              Key: `thumbs/${post.id}.jpg`,
+              Body: resizedImage,
+              ContentType: 'image/jpeg'
+            },
+            (err, data) => {
+              if (err) reject(err)
+              else resolve(data.Location.replace('s3.amazonaws.com/', ''))
+            }
+          )
         )
-      )
+      } catch {}
     }
 
     return {
