@@ -70,7 +70,9 @@ export class PlanetResolver extends RepositoryInjector {
   async planet(@Arg('planetName', () => ID) planetName: string) {
     return this.planetRepository
       .createQueryBuilder('planet')
-      .andWhere('planet.name ILIKE :planetName', { planetName })
+      .andWhere('planet.name ILIKE :planetName', {
+        planetName: planetName.replace(/_/g, '\\_')
+      })
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
       .leftJoinAndSelect('planet.moderators', 'moderator')
       .leftJoinAndSelect('planet.galaxy', 'galaxy')
@@ -156,6 +158,50 @@ export class PlanetResolver extends RepositoryInjector {
       .getMany()
 
     planets.forEach((planet) => (planet.postCount = planet.total))
+
+    return planets
+  }
+
+  @Query(() => [Planet])
+  async searchPlanets(@Arg('search') search: string) {
+    if (!search) return []
+
+    return this.planetRepository
+      .createQueryBuilder('planet')
+      .where('planet.name ILIKE :name', {
+        name: '%' + search.toLowerCase().replace(/ /g, '_') + '%'
+      })
+      .take(10)
+      .getMany()
+  }
+
+  @Query(() => [Planet])
+  async joinedPlanets(@Ctx() { userId }: Context) {
+    if (!userId) return []
+
+    let planets = await this.userRepository
+      .createQueryBuilder()
+      .relation(User, 'planets')
+      .of(userId)
+      .loadMany()
+
+    if (planets.length === 0) return []
+
+    planets = await this.planetRepository
+      .createQueryBuilder('planet')
+      .whereInIds(planets.map((planet) => planet.name))
+      .addOrderBy('planet.name', 'ASC')
+      .loadRelationCountAndMap(
+        'planet.postCount',
+        'planet.posts',
+        'post',
+        (qb) => {
+          return qb
+            .andWhere('post.deleted = false')
+            .andWhere("post.createdAt > NOW() - INTERVAL '1 day'")
+        }
+      )
+      .getMany()
 
     return planets
   }

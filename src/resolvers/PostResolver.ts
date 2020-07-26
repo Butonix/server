@@ -227,7 +227,7 @@ export class PostResolver extends RepositoryInjector {
       qb.addOrderBy('post.createdAt', 'DESC')
     } else if (sort === Sort.HOT) {
       qb.addSelect(
-        '(CAST(post.endorsementCount AS float) + 1)/((CAST((CAST(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS int) - CAST(EXTRACT(EPOCH FROM post.createdAt) AS int)+100000) AS FLOAT)/6.0)^(1.0/3.0))',
+        '(CAST(post.endorsementCount AS float) + 1)/((CAST((CAST(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) AS int) - CAST(EXTRACT(EPOCH FROM post.createdAt) AS int)+5000) AS FLOAT)/100.0)^(1.6))',
         'post_hotrank'
       )
       qb.addOrderBy('post_hotrank', 'DESC')
@@ -278,7 +278,7 @@ export class PostResolver extends RepositoryInjector {
         const blockedUsers = (await user.blockedUsers).map((user) => user.id)
         const hiddenPosts = (await user.hiddenPosts).map((post) => post.id)
 
-        if (!planetName && filter === Filter.MYTOPICS) {
+        if (!planetName && filter === Filter.MYPLANETS) {
           const planets = (await user.planets).map((planet) => planet.name)
           if (planets.length > 0) {
             qb.andWhere('post.planet = ANY(:planets)', { planets })
@@ -366,6 +366,8 @@ export class PostResolver extends RepositoryInjector {
     @Arg('postId', () => ID) postId: string,
     @Ctx() { userId }: Context
   ) {
+    if (!postId) return null
+
     const qb = this.postRepository
       .createQueryBuilder('post')
       .where('post.id = :postId', { postId })
@@ -500,9 +502,8 @@ export class PostResolver extends RepositoryInjector {
       const response = await axios.get(parseResult.lead_image_url, {
         responseType: 'arraybuffer'
       })
-      const isYoutube = parseResult.lead_image_url.includes('ytimg.com')
       const resizedImage = await sharp(response.data)
-        .resize(isYoutube ? 128 : 72, 72, {
+        .resize(80, 60, {
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
         .jpeg()

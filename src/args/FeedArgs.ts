@@ -19,7 +19,7 @@ export enum Time {
 
 export enum Filter {
   ALL = 'all',
-  MYTOPICS = 'mytopics'
+  MYPLANETS = 'myplanets'
 }
 
 export enum Type {

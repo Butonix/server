@@ -37,7 +37,6 @@ const subreddits = [
 ]
 
 async function redditReposter() {
-  return
   if (process.env.NODE_ENV !== 'production') {
     // DEV
     await TypeORM.createConnection({
@@ -165,9 +164,8 @@ async function redditReposter() {
       const response = await axios.get(parseResult.lead_image_url, {
         responseType: 'arraybuffer'
       })
-      const isYoutube = parseResult.lead_image_url.includes('ytimg.com')
       const resizedImage = await sharp(response.data)
-        .resize(isYoutube ? 128 : 72, 72, {
+        .resize(80, 60, {
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
         .jpeg()
@@ -198,7 +196,12 @@ async function redditReposter() {
       domain: post.domain,
       type,
       link: post.url,
-      planet: { name: post.subreddit }
+      planet: {
+        name: post.subreddit,
+        fullName: post.subreddit,
+        createdAt: new Date(2020, 7, 25),
+        galaxy: { name: 'other', fullName: 'Other', icon: 'mdiHelpCircle' }
+      }
     } as Post
   })
 

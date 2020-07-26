@@ -35,13 +35,10 @@ export class Planet {
   createdAt: Date
 
   @Field(() => User, { nullable: true })
-  @ManyToOne(
-    () => User,
-    (user) => user.posts
-  )
+  @ManyToOne(() => User, { nullable: true })
   creator: Lazy<User>
 
-  @Field(() => ID)
+  @Field(() => ID, { nullable: true })
   @Column({ nullable: true })
   creatorId: string
 
@@ -49,7 +46,6 @@ export class Planet {
     () => Post,
     (post) => post.planet
   )
-  @JoinTable()
   posts: Lazy<Post[]>
 
   @ManyToMany(
@@ -59,7 +55,7 @@ export class Planet {
   @JoinTable()
   users: Lazy<User[]>
 
-  @Field()
+  @Field({ nullable: true })
   userCount: number
 
   @Field(() => [User])
