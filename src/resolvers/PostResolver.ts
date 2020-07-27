@@ -36,7 +36,7 @@ import cheerio from 'cheerio'
 import request from 'request'
 // @ts-ignore
 import isUrl from 'is-url'
-import xss from 'xss'
+import { filterXSS } from 'xss'
 import { whiteList } from '../xssWhiteList'
 import { Planet } from '../entities/Planet'
 
@@ -458,7 +458,7 @@ export class PostResolver extends RepositoryInjector {
     }
 
     if (textContent) {
-      textContent = xss.filterXSS(textContent, { whiteList })
+      textContent = filterXSS(textContent, { whiteList })
     }
 
     this.userRepository.update(userId, { lastPostedAt: new Date() })
@@ -557,7 +557,7 @@ export class PostResolver extends RepositoryInjector {
     if (post.authorId !== userId && !user.admin)
       throw new Error('Attempt to edit post by someone other than author')
 
-    newTextContent = xss.filterXSS(newTextContent, { whiteList })
+    newTextContent = filterXSS(newTextContent, { whiteList })
 
     await this.postRepository
       .createQueryBuilder()

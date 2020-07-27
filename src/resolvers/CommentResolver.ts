@@ -21,7 +21,7 @@ import { Sort } from '../args/FeedArgs'
 import { User } from '../entities/User'
 import { differenceInSeconds } from 'date-fns'
 import { ReplyNotification } from '../entities/ReplyNotification'
-import xss from 'xss'
+import { filterXSS } from 'xss'
 import { whiteList } from '../xssWhiteList'
 
 @Resolver(() => Comment)
@@ -44,7 +44,7 @@ export class CommentResolver extends RepositoryInjector {
       }
     }
 
-    textContent = xss.filterXSS(textContent, { whiteList })
+    textContent = filterXSS(textContent, { whiteList })
 
     this.userRepository.update(userId, { lastCommentedAt: new Date() })
 
@@ -185,7 +185,7 @@ export class CommentResolver extends RepositoryInjector {
     if (comment.authorId !== userId && !user.admin)
       throw new Error('Attempt to edit post by someone other than author')
 
-    newTextContent = xss.filterXSS(newTextContent, { whiteList })
+    newTextContent = filterXSS(newTextContent, { whiteList })
 
     await this.commentRepository
       .createQueryBuilder()
