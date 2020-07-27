@@ -314,6 +314,8 @@ export class PostResolver extends RepositoryInjector {
       .skip(page * pageSize)
       .take(pageSize)
       .leftJoinAndSelect('post.planet', 'planet')
+      .loadRelationCountAndMap('planet.userCount', 'planet.users')
+      .leftJoinAndSelect('planet.galaxy', 'galaxy')
       .getMany()
 
     posts.forEach((post) => {
@@ -385,7 +387,11 @@ export class PostResolver extends RepositoryInjector {
       )
     }
 
-    const post = await qb.leftJoinAndSelect('post.planet', 'planet').getOne()
+    const post = await qb
+      .leftJoinAndSelect('post.planet', 'planet')
+      .loadRelationCountAndMap('planet.userCount', 'planet.users')
+      .leftJoinAndSelect('planet.galaxy', 'galaxy')
+      .getOne()
 
     if (!post) return null
 
@@ -401,7 +407,6 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @Mutation(() => PostView, { nullable: true })
-  @UseMiddleware(RequiresAuth)
   async recordPostView(
     @Arg('postId', () => ID) postId: string,
     @Ctx() { userId }: Context
