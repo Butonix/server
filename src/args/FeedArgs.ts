@@ -46,5 +46,11 @@ export class FeedArgs extends PaginationArgs {
   planetName?: string
 
   @Field({ nullable: true })
+  galaxyName?: string
+
+  @Field({ nullable: true })
   username?: string
+
+  @Field({ nullable: true })
+  search?: string
 }

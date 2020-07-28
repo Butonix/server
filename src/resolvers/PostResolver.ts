@@ -70,118 +70,6 @@ export class PostResolver extends RepositoryInjector {
   }
 
   @Query(() => [Post])
-  async searchPosts(
-    @Args() { page, pageSize, search, sort, time }: SearchPostsArgs,
-    @Ctx() { userId }: Context
-  ) {
-    if (!search) return []
-
-    const qb = this.postRepository
-      .createQueryBuilder('post')
-      .addSelect(
-        'ts_rank_cd(to_tsvector(post.textContent), plainto_tsquery(:query))',
-        'textrank'
-      )
-      .addSelect(
-        'ts_rank_cd(to_tsvector(post.link), plainto_tsquery(:query))',
-        'linkrank'
-      )
-      .addSelect(
-        'ts_rank_cd(to_tsvector(post.title), plainto_tsquery(:query))',
-        'titlerank'
-      )
-      .orderBy('titlerank', 'DESC')
-      .addOrderBy('textrank', 'DESC')
-      .addOrderBy('linkrank', 'DESC')
-      .setParameter('query', search)
-      .andWhere('post.deleted = false')
-      .skip(page * pageSize)
-      .take(pageSize)
-
-    if (sort === Sort.TOP) {
-      switch (time) {
-        case Time.HOUR:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 hour'")
-          break
-        case Time.DAY:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 day'")
-          break
-        case Time.WEEK:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 week'")
-          break
-        case Time.MONTH:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 month'")
-          break
-        case Time.YEAR:
-          qb.andWhere("post.createdAt > NOW() - INTERVAL '1 year'")
-          break
-        case Time.ALL:
-          break
-        default:
-          break
-      }
-      qb.addOrderBy('post.endorsementCount', 'DESC')
-    }
-
-    qb.addOrderBy('post.createdAt', 'DESC')
-
-    if (userId) {
-      const hiddenTopics = (
-        await this.userRepository
-          .createQueryBuilder()
-          .relation(User, 'hiddenTopics')
-          .of(userId)
-          .loadMany()
-      ).map((topic) => topic.name)
-
-      if (hiddenTopics.length > 0) {
-        qb.andWhere(
-          'COALESCE(ARRAY_LENGTH(ARRAY(SELECT UNNEST(:hiddenTopics::text[]) INTERSECT SELECT UNNEST(post.topicsarr::text[])), 1), 0) = 0'
-        ).setParameter('hiddenTopics', hiddenTopics)
-      }
-
-      const blockedUsers = (
-        await this.userRepository
-          .createQueryBuilder()
-          .relation(User, 'blockedUsers')
-          .of(userId)
-          .loadMany()
-      ).map((user) => user.id)
-
-      qb.andWhere('NOT (post.authorId = ANY(:blockedUsers))', { blockedUsers })
-
-      const hiddenPosts = (
-        await this.userRepository
-          .createQueryBuilder()
-          .relation(User, 'hiddenPosts')
-          .of(userId)
-          .loadMany()
-      ).map((post) => post.id)
-
-      qb.andWhere('NOT (post.id = ANY(:hiddenPosts))', { hiddenPosts })
-
-      qb.loadRelationCountAndMap(
-        'post.personalEndorsementCount',
-        'post.endorsements',
-        'endorsement',
-        (qb) => {
-          return qb
-            .andWhere('endorsement.active = true')
-            .andWhere('endorsement.userId = :userId', { userId })
-        }
-      )
-    }
-
-    const posts = await qb.leftJoinAndSelect('post.planet', 'planet').getMany()
-
-    posts.forEach(
-      (post) => (post.isEndorsed = Boolean(post.personalEndorsementCount))
-    )
-
-    return posts
-  }
-
-  @Query(() => [Post])
   async feed(
     @Args()
     {
@@ -192,7 +80,9 @@ export class PostResolver extends RepositoryInjector {
       filter,
       types,
       planetName,
-      username
+      galaxyName,
+      username,
+      search
     }: FeedArgs,
     @Ctx() { userId }: Context
   ) {
@@ -203,6 +93,36 @@ export class PostResolver extends RepositoryInjector {
 
     if (planetName) {
       qb.andWhere(':planetName ILIKE post.planet', { planetName })
+    }
+
+    if (galaxyName) {
+      qb.leftJoinAndSelect('post.planet', 'planet')
+      qb.andWhere(':galaxyName ILIKE planet.galaxy', { galaxyName })
+    }
+
+    if (search) {
+      qb.addSelect(
+        'ts_rank_cd(to_tsvector(post.textContent), plainto_tsquery(:query))',
+        'textrank'
+      )
+        .addSelect(
+          'ts_rank_cd(to_tsvector(post.link), plainto_tsquery(:query))',
+          'linkrank'
+        )
+        .addSelect(
+          'ts_rank_cd(to_tsvector(post.title), plainto_tsquery(:query))',
+          'titlerank'
+        )
+        .leftJoinAndSelect('post.author', 'author')
+        .addSelect(
+          'ts_rank_cd(to_tsvector(author.username), plainto_tsquery(:query))',
+          'usernamerank'
+        )
+        .addOrderBy('titlerank', 'DESC')
+        .addOrderBy('textrank', 'DESC')
+        .addOrderBy('linkrank', 'DESC')
+        .addOrderBy('usernamerank', 'DESC')
+        .setParameter('query', search)
     }
 
     if (username) {

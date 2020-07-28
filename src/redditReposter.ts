@@ -51,7 +51,7 @@ async function redditReposter() {
       synchronize: true,
       logging: true,
       cache: true,
-      dropSchema: true
+      dropSchema: false
     })
   } else if (process.env.NODE_ENV === 'production' && !process.env.STAGING) {
     // PROD
