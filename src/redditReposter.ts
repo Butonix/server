@@ -200,7 +200,6 @@ async function redditReposter() {
       link: post.url,
       planet: {
         name: post.subreddit,
-        fullName: post.subreddit,
         createdAt: new Date(2020, 7, 25),
         galaxy: { name: 'other', fullName: 'Other', icon: 'mdiHelpCircle' }
       }
