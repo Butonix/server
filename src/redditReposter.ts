@@ -11,30 +11,31 @@ import { getThumbnailUrl } from './thumbnail'
 import sharp from 'sharp'
 import { s3 } from './s3'
 import { entities } from './EntitiesAndResolvers'
+import { galaxiesList } from './galaxiesList'
 
-const subreddits = [
-  'programming',
-  'science',
-  'Games',
-  'movies',
-  'videos',
-  'news',
-  'television',
-  'worldnews',
-  'sports',
-  'InternetIsBeautiful',
-  'gadgets',
-  'Futurology',
-  'technology',
-  'indieheads',
-  'hiphopheads',
-  'listentothis',
-  'Music',
-  'GameDeals',
-  'nba',
-  'nfl',
-  'youtubehaiku'
-]
+const galaxyMap = {
+  programming: galaxiesList.find((g) => g.name === 'programming'),
+  science: galaxiesList.find((g) => g.name === 'science'),
+  Games: galaxiesList.find((g) => g.name === 'gaming'),
+  GameDeals: galaxiesList.find((g) => g.name === 'gaming'),
+  movies: galaxiesList.find((g) => g.name === 'movies_tv'),
+  television: galaxiesList.find((g) => g.name === 'movies_tv'),
+  videos: galaxiesList.find((g) => g.name === 'videos_livestreams'),
+  youtubehaiku: galaxiesList.find((g) => g.name === 'videos_livestreams'),
+  news: galaxiesList.find((g) => g.name === 'news'),
+  worldnews: galaxiesList.find((g) => g.name === 'news'),
+  sports: galaxiesList.find((g) => g.name === 'sports'),
+  InternetIsBeautiful: galaxiesList.find((g) => g.name === 'technology'),
+  gadgets: galaxiesList.find((g) => g.name === 'technology'),
+  Futurology: galaxiesList.find((g) => g.name === 'technology'),
+  technology: galaxiesList.find((g) => g.name === 'technology'),
+  indieheads: galaxiesList.find((g) => g.name === 'music'),
+  hiphopheads: galaxiesList.find((g) => g.name === 'music'),
+  listentothis: galaxiesList.find((g) => g.name === 'music'),
+  Music: galaxiesList.find((g) => g.name === 'music')
+}
+
+const subreddits = Object.keys(galaxyMap)
 
 async function redditReposter() {
   if (process.env.NODE_ENV !== 'production') {
@@ -50,7 +51,7 @@ async function redditReposter() {
       synchronize: true,
       logging: true,
       cache: true,
-      dropSchema: false
+      dropSchema: true
     })
   } else if (process.env.NODE_ENV === 'production' && !process.env.STAGING) {
     // PROD
@@ -200,8 +201,11 @@ async function redditReposter() {
       link: post.url,
       planet: {
         name: post.subreddit,
-        createdAt: new Date(2020, 7, 25),
-        galaxy: { name: 'other', fullName: 'Other', icon: 'mdiHelpCircle' }
+        description: post.subreddit,
+        moderators: [{ id: cometBot.id }],
+        creatorId: cometBot.id,
+        createdAt: new Date(2020, 7, 28),
+        galaxy: galaxyMap[post.subreddit]
       }
     } as Post
   })

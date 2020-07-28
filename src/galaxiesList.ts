@@ -9,9 +9,14 @@ const galaxies = [
     icon: 'mdiEmoticonExcited'
   },
   {
-    fullName: 'Movies, TV & Entertainment',
-    name: 'entertainment',
+    fullName: 'Movies & TV',
+    name: 'movies_tv',
     icon: 'mdiMovie'
+  },
+  {
+    fullName: 'Videos & Livestreams',
+    name: 'videos_livestreams',
+    icon: 'mdiVideoOutline'
   },
   { fullName: 'News & Politics', name: 'news', icon: 'mdiNewspaper' },
   { fullName: 'Drugs', name: 'drugs', icon: 'mdiPill' },
