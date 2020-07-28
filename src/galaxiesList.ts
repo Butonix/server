@@ -41,6 +41,7 @@ const galaxies = [
   },
   { fullName: 'Fashion', name: 'fashion', icon: 'mdiTshirtCrew' },
   { fullName: 'Places', name: 'places', icon: 'mdiCity' },
+  { fullName: 'Animals', name: 'animals', icon: 'mdiDogSide' },
   { fullName: 'Other', name: 'other', icon: 'mdiHelpCircle' }
 ]
 

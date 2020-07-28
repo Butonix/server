@@ -24,10 +24,6 @@ export class Planet {
 
   @Field({ nullable: true })
   @Column('text', { nullable: true })
-  fullName?: string
-
-  @Field({ nullable: true })
-  @Column('text', { nullable: true })
   description?: string
 
   @Field()

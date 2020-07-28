@@ -23,6 +23,7 @@ import { differenceInSeconds } from 'date-fns'
 import { ReplyNotification } from '../entities/ReplyNotification'
 import { filterXSS } from 'xss'
 import { whiteList } from '../xssWhiteList'
+import { CommentEndorsement } from '../entities/CommentEndorsement'
 
 @Resolver(() => Comment)
 export class CommentResolver extends RepositoryInjector {
@@ -57,8 +58,16 @@ export class CommentResolver extends RepositoryInjector {
       postId,
       authorId: userId,
       createdAt: new Date(),
-      isEndorsed: false
+      isEndorsed: false,
+      endorsementCount: 1
     } as Comment)
+
+    this.commentEndorsementRepository.save({
+      commentId,
+      userId,
+      active: true,
+      createdAt: new Date()
+    } as CommentEndorsement)
 
     this.postRepository.increment({ id: postId }, 'commentCount', 1)
 
@@ -209,9 +218,6 @@ export class CommentResolver extends RepositoryInjector {
       .leftJoinAndSelect('comment.author', 'author')
       .getOne()
     if (!comment) throw new Error('Invalid commentId')
-
-    if (userId === comment.authorId)
-      throw new Error('Cannot endorse your own comment')
 
     let active: boolean
 

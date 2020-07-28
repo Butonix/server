@@ -42,7 +42,6 @@ export class PlanetResolver extends RepositoryInjector {
 
     await this.planetRepository.save({
       name,
-      fullName: name,
       description,
       galaxy: galaxiesList.find((ga) => ga.name === galaxy),
       createdAt: new Date(),
@@ -160,6 +159,14 @@ export class PlanetResolver extends RepositoryInjector {
     planets.forEach((planet) => (planet.postCount = planet.total))
 
     return planets
+  }
+
+  @Query(() => [Planet])
+  async allPlanets() {
+    return this.planetRepository
+      .createQueryBuilder('planet')
+      .orderBy('planet.name', 'ASC')
+      .getMany()
   }
 
   @Query(() => [Planet])

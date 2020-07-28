@@ -39,6 +39,7 @@ import isUrl from 'is-url'
 import { filterXSS } from 'xss'
 import { whiteList } from '../xssWhiteList'
 import { Planet } from '../entities/Planet'
+import { PostEndorsement } from '../entities/PostEndorsement'
 
 @Resolver(() => Post)
 export class PostResolver extends RepositoryInjector {
@@ -531,7 +532,7 @@ export class PostResolver extends RepositoryInjector {
       )
     }
 
-    return this.postRepository.save({
+    const post = await this.postRepository.save({
       id: postId,
       title,
       type,
@@ -541,8 +542,18 @@ export class PostResolver extends RepositoryInjector {
       authorId: userId,
       thumbnailUrl: s3UploadLink ? s3UploadLink : undefined,
       domain: parseResult ? parseResult.domain.replace('www.', '') : undefined,
-      planet: { name: planet } as Planet
+      planet: { name: planet } as Planet,
+      endorsementCount: 1
     } as Post)
+
+    this.postEndorsementRepository.save({
+      postId,
+      userId,
+      active: true,
+      createdAt: new Date()
+    } as PostEndorsement)
+
+    return post
   }
 
   @UseMiddleware(RequiresAuth)
@@ -602,9 +613,6 @@ export class PostResolver extends RepositoryInjector {
       .leftJoinAndSelect('post.author', 'author')
       .getOne()
     if (!post) throw new Error('Invalid postId')
-
-    if (userId === post.authorId)
-      throw new Error('Cannot endorse your own post')
 
     let active: boolean
 
