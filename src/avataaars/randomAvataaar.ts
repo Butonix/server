@@ -1,4 +1,4 @@
-const avatarStyle = 'Circle'
+const avatarStyle = 'Transparent'
 const topTypes = [
   'NoHair',
   'Eyepatch',

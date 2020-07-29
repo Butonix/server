@@ -23,6 +23,10 @@ export class Planet {
   name: string
 
   @Field({ nullable: true })
+  @Column({ nullable: true })
+  customName?: string
+
+  @Field({ nullable: true })
   @Column('text', { nullable: true })
   description?: string
 

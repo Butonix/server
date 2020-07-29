@@ -86,7 +86,7 @@ async function redditReposter() {
     cometBot = await userRepository.save({
       username: 'Comet',
       createdAt: new Date(),
-      profilePicUrl: 'https://i.getcomet.net/thumbs/YJT7aBjRk.jpg',
+      profilePicUrl: 'https://i.getcomet.net/8TPU9H06p.png',
       passwordHash: await argon2.hash(process.env.COMET_BOT_PASSWORD),
       admin: true,
       bio: 'The official Comet bot.',
