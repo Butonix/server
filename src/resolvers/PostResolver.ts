@@ -90,14 +90,15 @@ export class PostResolver extends RepositoryInjector {
       .createQueryBuilder('post')
       .andWhere('post.deleted = false')
       .andWhere('post.sticky = false')
+      .leftJoinAndSelect('post.planet', 'planet')
+      .leftJoinAndSelect('planet.galaxy', 'galaxy')
 
     if (planetName) {
       qb.andWhere(':planetName ILIKE post.planet', { planetName })
     }
 
     if (galaxyName) {
-      qb.leftJoinAndSelect('post.planet', 'planet')
-      qb.andWhere(':galaxyName ILIKE planet.galaxy', { galaxyName })
+      qb.andWhere(':galaxyName ILIKE galaxy.name', { galaxyName })
     }
 
     if (search) {
@@ -234,9 +235,7 @@ export class PostResolver extends RepositoryInjector {
     const posts = await qb
       .skip(page * pageSize)
       .take(pageSize)
-      .leftJoinAndSelect('post.planet', 'planet')
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
-      .leftJoinAndSelect('planet.galaxy', 'galaxy')
       .getMany()
 
     posts.forEach((post) => {
