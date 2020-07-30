@@ -27,6 +27,9 @@ import { avataaarEndpoint } from './avataaars/avataaarEndpoint'
 import { ProfilePicStorage } from './ProfilePicStorage'
 import { CommentSort } from './args/UserCommentsArgs'
 import { entities, resolvers } from './EntitiesAndResolvers'
+import { getRepository } from 'typeorm'
+import { Galaxy } from './entities/Galaxy'
+import { galaxiesList } from './galaxiesList'
 
 // register 3rd party IOC container
 TypeORM.useContainer(Container)
@@ -78,6 +81,8 @@ async function bootstrap() {
         cache: true
       })
     } else return
+
+    getRepository(Galaxy).save(galaxiesList)
 
     registerEnumType(PostType, {
       name: 'PostType'

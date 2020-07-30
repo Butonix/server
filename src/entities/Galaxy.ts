@@ -28,4 +28,7 @@ export class Galaxy {
   )
   @JoinTable()
   planets: Lazy<Planet[]>
+
+  @Field({ nullable: true })
+  planetCount: number
 }

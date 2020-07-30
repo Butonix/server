@@ -10,3 +10,13 @@ export const discordReport = async (reportedBy: string, postLink: string) => {
     `${reportedBy} reported ${postLink}`
   )
 }
+
+export const discordSendFeedback = async (
+  feedback: string,
+  username: string
+) => {
+  const channel = await bot.channels.fetch('738466811242348604')
+  await (channel as Discord.TextChannel).send(
+    `Feedback from ${username}: ${feedback}`
+  )
+}

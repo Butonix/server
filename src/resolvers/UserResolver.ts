@@ -17,6 +17,7 @@ import { Comment } from '../entities/Comment'
 import { CommentSort, UserCommentsArgs } from '../args/UserCommentsArgs'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Time } from '../args/FeedArgs'
+import { discordSendFeedback } from '../DiscordBot'
 
 @Resolver(() => User)
 export class UserResolver extends RepositoryInjector {
@@ -270,6 +271,20 @@ export class UserResolver extends RepositoryInjector {
       banReason: null
     })
 
+    return true
+  }
+
+  @Mutation(() => Boolean)
+  async sendFeedback(
+    @Arg('feedback') feedback: string,
+    @Ctx() { userId }: Context
+  ) {
+    let username = 'Anonymous'
+    if (userId) {
+      const user = await this.userRepository.findOne(userId)
+      username = user.username
+    }
+    await discordSendFeedback(feedback, username)
     return true
   }
 

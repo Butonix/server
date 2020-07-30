@@ -14,6 +14,7 @@ import { CommentResolver } from './resolvers/CommentResolver'
 import { FiltersResolver } from './resolvers/FiltersResolver'
 import { NotificationResolver } from './resolvers/NotificationResolver'
 import { PlanetResolver } from './resolvers/PlanetResolver'
+import { GalaxyResolver } from './resolvers/GalaxyResolver'
 
 export const entities = [
   User,
@@ -33,5 +34,6 @@ export const resolvers = [
   CommentResolver,
   FiltersResolver,
   NotificationResolver,
-  PlanetResolver
+  PlanetResolver,
+  GalaxyResolver
 ]
