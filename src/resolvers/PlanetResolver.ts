@@ -46,7 +46,8 @@ export class PlanetResolver extends RepositoryInjector {
       galaxy: galaxiesList.find((ga) => ga.name === galaxy),
       createdAt: new Date(),
       creatorId: userId,
-      moderators: [{ id: userId }]
+      moderators: [{ id: userId }],
+      users: [{ id: userId }]
     } as Planet)
 
     return true

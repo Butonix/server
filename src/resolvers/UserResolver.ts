@@ -30,6 +30,7 @@ export class UserResolver extends RepositoryInjector {
       .createQueryBuilder('user')
       .whereInIds(userId)
       .andWhere('user.banned = false')
+      .leftJoinAndSelect('user.moderatedPlanets', 'moderatedPlanet')
       .getOne()
 
     if (user) {
@@ -66,6 +67,7 @@ export class UserResolver extends RepositoryInjector {
       .loadRelationCountAndMap('user.postCount', 'user.posts', 'post', (qb) => {
         return qb.andWhere('post.deleted = false')
       })
+      .leftJoinAndSelect('user.moderatedPlanets', 'moderatedPlanet')
       .getOne()
   }
 
