@@ -143,7 +143,7 @@ export class PlanetResolver extends RepositoryInjector {
 
   @Query(() => [Planet])
   async popularPlanets(
-    @Arg('galaxyName', { nullable: true }) galaxyName: string
+    @Arg('galaxyName', () => ID, { nullable: true }) galaxyName: string
   ) {
     const qb = await this.planetRepository
       .createQueryBuilder('planet')

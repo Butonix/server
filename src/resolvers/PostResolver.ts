@@ -153,7 +153,7 @@ export class PostResolver extends RepositoryInjector {
         'post_hotrank'
       )
       qb.addOrderBy('post_hotrank', 'DESC')
-    } else if (sort === Sort.TOP || sort === Sort.COMMENTS) {
+    } else if (sort === Sort.TOP || sort === Sort.MOSTCOMMENTS) {
       switch (time) {
         case Time.HOUR:
           qb.andWhere("post.createdAt > NOW() - INTERVAL '1 hour'")
@@ -177,7 +177,7 @@ export class PostResolver extends RepositoryInjector {
       }
       if (sort === Sort.TOP) {
         qb.addOrderBy('post.endorsementCount', 'DESC')
-      } else if (sort === Sort.COMMENTS) {
+      } else if (sort === Sort.MOSTCOMMENTS) {
         qb.addOrderBy('post.commentCount', 'DESC')
       }
       qb.addOrderBy('post.createdAt', 'DESC')
@@ -471,6 +471,8 @@ export class PostResolver extends RepositoryInjector {
       active: true,
       createdAt: new Date()
     } as PostEndorsement)
+
+    this.userRepository.increment({ id: userId }, 'endorsementCount', 1)
 
     return post
   }

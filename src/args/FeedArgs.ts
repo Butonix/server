@@ -1,11 +1,11 @@
-import { ArgsType, Field } from 'type-graphql'
+import { ArgsType, Field, ID } from 'type-graphql'
 import { PaginationArgs } from './PaginationArgs'
 
 export enum Sort {
   NEW = 'new',
   TOP = 'top',
   HOT = 'hot',
-  COMMENTS = 'comments'
+  MOSTCOMMENTS = 'mostcomments'
 }
 
 export enum Time {
@@ -42,10 +42,10 @@ export class FeedArgs extends PaginationArgs {
   @Field(() => [Type], { defaultValue: [] })
   types: Type[]
 
-  @Field({ nullable: true })
+  @Field(() => ID, { nullable: true })
   planetName?: string
 
-  @Field({ nullable: true })
+  @Field(() => ID, { nullable: true })
   galaxyName?: string
 
   @Field({ nullable: true })

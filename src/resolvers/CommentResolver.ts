@@ -39,11 +39,11 @@ export class CommentResolver extends RepositoryInjector {
 
     if (!user) throw new Error('Invalid login')
 
-    if (user.lastCommentedAt && !user.admin) {
+    /*if (user.lastCommentedAt && !user.admin) {
       if (differenceInSeconds(new Date(), user.lastCommentedAt) < 15) {
         throw new Error('Please wait 15 seconds between comments')
       }
-    }
+    }*/
 
     textContent = filterXSS(textContent, { whiteList })
 
@@ -58,7 +58,7 @@ export class CommentResolver extends RepositoryInjector {
       postId,
       authorId: userId,
       createdAt: new Date(),
-      isEndorsed: false,
+      isEndorsed: true,
       endorsementCount: 1
     } as Comment)
 
@@ -68,6 +68,8 @@ export class CommentResolver extends RepositoryInjector {
       active: true,
       createdAt: new Date()
     } as CommentEndorsement)
+
+    this.userRepository.increment({ id: userId }, 'endorsementCount', 1)
 
     this.postRepository.increment({ id: postId }, 'commentCount', 1)
 
