@@ -197,4 +197,8 @@ export class User {
    */
   @Field()
   isBlocking: boolean
+
+  @Field()
+  @Column({ default: false })
+  appearOffline: boolean
 }

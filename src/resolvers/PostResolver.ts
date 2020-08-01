@@ -356,7 +356,11 @@ export class PostResolver extends RepositoryInjector {
       } as PostView)
     }
 
-    this.userRepository.update(userId, { lastLogin: new Date() })
+    this.userRepository.findOne(userId).then((user) => {
+      if (!user.appearOffline) {
+        this.userRepository.update(userId, { lastLogin: new Date() })
+      }
+    })
 
     return postView
   }

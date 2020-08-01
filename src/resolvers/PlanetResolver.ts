@@ -174,6 +174,8 @@ export class PlanetResolver extends RepositoryInjector {
     return this.planetRepository
       .createQueryBuilder('planet')
       .orderBy('planet.name', 'ASC')
+      .leftJoinAndSelect('planet.galaxy', 'galaxy')
+      .loadRelationCountAndMap('planet.userCount', 'planet.users')
       .getMany()
   }
 

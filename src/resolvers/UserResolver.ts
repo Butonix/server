@@ -35,8 +35,11 @@ export class UserResolver extends RepositoryInjector {
       .getOne()
 
     if (user) {
-      const lastLogin = new Date()
-      user.lastLogin = lastLogin
+      let lastLogin = user.lastLogin
+      if (!user.appearOffline) {
+        lastLogin = new Date()
+        user.lastLogin = lastLogin
+      }
       let ipAddresses = user.ipAddresses
       ipAddresses.unshift(req.ip)
       ipAddresses = [...new Set(ipAddresses)]
@@ -165,6 +168,16 @@ export class UserResolver extends RepositoryInjector {
   async setBio(@Arg('bio') bio: string, @Ctx() { userId }: Context) {
     if (bio.length > 160) throw new Error('Bio must be 160 characters or less')
     await this.userRepository.update(userId, { bio })
+    return true
+  }
+
+  @UseMiddleware(RequiresAuth)
+  @Mutation(() => Boolean)
+  async setAppearOffline(
+    @Arg('appearOffline') appearOffline: boolean,
+    @Ctx() { userId }: Context
+  ) {
+    await this.userRepository.update(userId, { appearOffline })
     return true
   }
 

@@ -204,7 +204,7 @@ async function redditReposter() {
         description: post.subreddit,
         moderators: [{ id: cometBot.id }],
         creatorId: cometBot.id,
-        createdAt: new Date(2020, 7, 28),
+        createdAt: new Date(2020, 6, 28),
         galaxy: galaxyMap[post.subreddit]
       }
     } as Post
