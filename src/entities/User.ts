@@ -89,7 +89,7 @@ export class User {
 
   @ManyToMany(() => Planet)
   @JoinTable()
-  blockedPlanets: Lazy<Planet[]>
+  mutedPlanets: Lazy<Planet[]>
 
   @ManyToMany(() => Post)
   @JoinTable()

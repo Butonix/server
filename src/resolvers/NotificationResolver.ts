@@ -8,7 +8,7 @@ import {
   Resolver,
   UseMiddleware
 } from 'type-graphql'
-import { RequiresAuth } from '../RequiresAuth'
+import { RequiresAuth } from '../middleware/RequiresAuth'
 import { ReplyNotification } from '../entities/ReplyNotification'
 import { Context } from '../Context'
 

@@ -119,6 +119,12 @@ export class Post {
   @Column({ default: false })
   deleted: boolean
 
+  @Column({ default: false })
+  removed: boolean
+
+  @Column({ nullable: true })
+  removedReason?: string
+
   @Field({ nullable: true })
   postView: PostView
 

@@ -7,7 +7,7 @@ import { Repository } from 'typeorm'
 import { InjectRepository } from 'typeorm-typedi-extensions'
 import { createAccessToken } from '../auth'
 import * as argon2 from 'argon2'
-import { RequiresAuth } from '../RequiresAuth'
+import { RequiresAuth } from '../middleware/RequiresAuth'
 import { randomAvataaarUrl } from '../avataaars/randomAvataaar'
 import { SignUpArgs } from '../args/SignUpArgs'
 

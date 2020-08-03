@@ -11,7 +11,7 @@ import {
   UseMiddleware
 } from 'type-graphql'
 import { RepositoryInjector } from '../RepositoryInjector'
-import { RequiresAuth } from '../RequiresAuth'
+import { RequiresAuth } from '../middleware/RequiresAuth'
 import { CreatePlanetArgs } from '../args/CreatePlanetArgs'
 import { Planet } from '../entities/Planet'
 import { galaxiesList } from '../galaxiesList'
@@ -109,33 +109,42 @@ export class PlanetResolver extends RepositoryInjector {
 
   @UseMiddleware(RequiresAuth)
   @Mutation(() => Boolean)
-  async blockPlanet(
+  async mutePlanet(
     @Arg('planetName', () => ID) planetName: string,
     @Ctx() { userId }: Context
   ) {
+    const foundPlanet = await this.planetRepository
+      .createQueryBuilder('planet')
+      .where('planet.name ILIKE :planetName', {
+        planetName: planetName.replace(/_/g, '\\_')
+      })
+      .getOne()
+
+    if (!foundPlanet) throw new Error('Planet does not exist')
+
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'planets')
       .of(userId)
-      .remove(planetName)
+      .remove(foundPlanet.name)
 
     await this.userRepository
       .createQueryBuilder()
-      .relation(User, 'blockedPlanets')
+      .relation(User, 'mutedPlanets')
       .of(userId)
-      .add(planetName)
+      .add(foundPlanet.name)
     return true
   }
 
   @UseMiddleware(RequiresAuth)
   @Mutation(() => Boolean)
-  async unblockPlanet(
+  async unmutePlanet(
     @Arg('planetName', () => ID) planetName: string,
     @Ctx() { userId }: Context
   ) {
     await this.userRepository
       .createQueryBuilder()
-      .relation(User, 'blockedPlanets')
+      .relation(User, 'mutedPlanets')
       .of(userId)
       .remove(planetName)
     return true
@@ -239,22 +248,22 @@ export class PlanetResolver extends RepositoryInjector {
   }
 
   @FieldResolver()
-  async blocking(@Root() planet: Planet, @Ctx() { userId }: Context) {
+  async muted(@Root() planet: Planet, @Ctx() { userId }: Context) {
     if (!userId) return false
 
     const user = await this.userRepository
       .createQueryBuilder('user')
       .where('user.id = :userId', { userId: userId })
       .leftJoinAndSelect(
-        'user.blockedPlanets',
-        'blockedPlanet',
-        'blockedPlanet.name = :name',
+        'user.mutedPlanets',
+        'mutedPlanet',
+        'mutedPlanet.name = :name',
         {
           name: planet.name
         }
       )
       .getOne()
 
-    return Boolean((await user.blockedPlanets).length)
+    return Boolean((await user.mutedPlanets).length)
   }
 }

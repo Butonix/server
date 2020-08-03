@@ -20,11 +20,8 @@ import {
 import { PostType } from './entities/Post'
 import { Filter, Sort, Time, Type } from './args/FeedArgs'
 import aws from 'aws-sdk'
-import multer from 'multer'
-import { ImageStorage } from './ImageStorage'
 // @ts-ignore
 import { avataaarEndpoint } from './avataaars/avataaarEndpoint'
-import { ProfilePicStorage } from './ProfilePicStorage'
 import { CommentSort } from './args/UserCommentsArgs'
 import { entities, resolvers } from './EntitiesAndResolvers'
 import { getRepository } from 'typeorm'
@@ -157,72 +154,6 @@ async function bootstrap() {
         credentials: true
       }
     })
-
-    const upload = multer({
-      fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-          cb(null, true)
-        } else {
-          cb(new Error('Image must be JPEG or PNG'))
-        }
-      },
-      limits: {
-        fileSize: 4 * 1024 * 1024
-      },
-      storage: new ImageStorage()
-    })
-
-    const imageUpload = upload.single('image')
-
-    app.post(
-      '/upload',
-      (req: any, res: any, next: any) => {
-        imageUpload(req, res, (err: any): any => {
-          if (err) next(err)
-          else next()
-        })
-      },
-      (req: any, res: any) => {
-        // @ts-ignore
-        return res.send({ link: req.file.location })
-      },
-      (err: any, req: any, res: any) => {
-        res.send({ error: err.message })
-      }
-    )
-
-    const uploadProfilePic = multer({
-      fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-          cb(null, true)
-        } else {
-          cb(new Error('Image must be JPEG or PNG'))
-        }
-      },
-      limits: {
-        fileSize: 4 * 1024 * 1024
-      },
-      storage: new ProfilePicStorage()
-    })
-
-    const profilePicUpload = uploadProfilePic.single('image')
-
-    app.post(
-      '/uploadprofilepic',
-      (req: any, res: any, next: any) => {
-        profilePicUpload(req, res, (err: any): any => {
-          if (err) next(err)
-          else next()
-        })
-      },
-      (req: any, res: any) => {
-        // @ts-ignore
-        return res.send({ link: req.file.location })
-      },
-      (err: any, req: any, res: any) => {
-        res.send({ error: err.message })
-      }
-    )
 
     app.get('/avataaar', avataaarEndpoint)
 

@@ -55,6 +55,10 @@ export class Planet {
   @JoinTable()
   users: Lazy<User[]>
 
+  @ManyToMany(() => User)
+  @JoinTable()
+  bannedUsers: Lazy<User[]>
+
   @Field({ nullable: true })
   userCount: number
 
@@ -112,10 +116,14 @@ export class Planet {
 
   @Field({ nullable: true })
   @Column({ nullable: true })
+  backgroundImageUrl?: string
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
   themeColor?: string
 
   @Field()
-  blocking: boolean
+  muted: boolean
 
   @Field()
   joined: boolean

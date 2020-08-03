@@ -13,7 +13,7 @@ import {
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Post, PostType } from '../entities/Post'
 import { SubmitPostArgs } from '../args/SubmitPostArgs'
-import { RequiresAuth } from '../RequiresAuth'
+import { RequiresAuth } from '../middleware/RequiresAuth'
 import { Context } from '../Context'
 import shortid from 'shortid'
 import Mercury from '@postlight/mercury-parser'
@@ -89,6 +89,7 @@ export class PostResolver extends RepositoryInjector {
     const qb = this.postRepository
       .createQueryBuilder('post')
       .andWhere('post.deleted = false')
+      .andWhere('post.removed = false')
       .andWhere('post.sticky = false')
       .leftJoinAndSelect('post.planet', 'planet')
       .leftJoinAndSelect('planet.galaxy', 'galaxy')
@@ -188,13 +189,13 @@ export class PostResolver extends RepositoryInjector {
         .createQueryBuilder('user')
         .whereInIds(userId)
         .leftJoinAndSelect('user.planets', 'planets')
-        .leftJoinAndSelect('user.blockedPlanets', 'blockedPlanets')
+        .leftJoinAndSelect('user.mutedPlanets', 'mutedPlanets')
         .leftJoinAndSelect('user.blockedUsers', 'blockedUsers')
         .leftJoinAndSelect('user.hiddenPosts', 'hiddenPosts')
         .getOne()
 
       if (user) {
-        const blockedPlanets = (await user.blockedPlanets).map(
+        const mutedPlanets = (await user.mutedPlanets).map(
           (planet) => planet.name
         )
         const blockedUsers = (await user.blockedUsers).map((user) => user.id)
@@ -207,9 +208,9 @@ export class PostResolver extends RepositoryInjector {
           }
         }
 
-        if (blockedPlanets.length > 0) {
-          qb.andWhere('NOT (post.planet = ANY(:blockedPlanets))', {
-            blockedPlanets
+        if (mutedPlanets.length > 0) {
+          qb.andWhere('NOT (post.planet = ANY(:mutedPlanets))', {
+            mutedPlanets
           })
         }
 
@@ -232,11 +233,41 @@ export class PostResolver extends RepositoryInjector {
       }
     }
 
-    const posts = await qb
+    let posts = await qb
       .skip(page * pageSize)
       .take(pageSize)
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
       .getMany()
+
+    let stickies: Post[] = []
+
+    if (planetName) {
+      const stickiesQb = await this.postRepository
+        .createQueryBuilder('post')
+        .andWhere('post.sticky = true')
+        .andWhere('post.planet = :planetName', { planetName })
+        .leftJoinAndSelect('post.planet', 'planet')
+        .leftJoinAndSelect('planet.galaxy', 'galaxy')
+        .loadRelationCountAndMap('planet.userCount', 'planet.users')
+        .addOrderBy('post.createdAt', 'DESC')
+
+      if (userId) {
+        stickiesQb.loadRelationCountAndMap(
+          'post.personalEndorsementCount',
+          'post.endorsements',
+          'endorsement',
+          (qb) => {
+            return qb
+              .andWhere('endorsement.active = true')
+              .andWhere('endorsement.userId = :userId', { userId })
+          }
+        )
+      }
+
+      stickies = await stickiesQb.getMany()
+    }
+
+    posts = stickies.concat(posts)
 
     posts.forEach((post) => {
       post.isEndorsed = Boolean(post.personalEndorsementCount)

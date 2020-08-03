@@ -12,12 +12,17 @@ import {
 } from 'type-graphql'
 import { Context } from '../Context'
 import { User } from '../entities/User'
-import { RequiresAuth } from '../RequiresAuth'
+import { RequiresAuth } from '../middleware/RequiresAuth'
 import { Comment } from '../entities/Comment'
 import { CommentSort, UserCommentsArgs } from '../args/UserCommentsArgs'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Time } from '../args/FeedArgs'
 import { discordSendFeedback } from '../DiscordBot'
+import { RequiresMod } from '../middleware/RequiresMod'
+import { FileUpload, GraphQLUpload } from 'graphql-upload'
+import sharp from 'sharp'
+import { Stream } from 'stream'
+import { s3upload } from '../S3Storage'
 
 @Resolver(() => User)
 export class UserResolver extends RepositoryInjector {
@@ -181,6 +186,36 @@ export class UserResolver extends RepositoryInjector {
     return true
   }
 
+  @Mutation(() => Boolean)
+  @UseMiddleware(RequiresAuth)
+  async uploadProfilePic(
+    @Arg('file', () => GraphQLUpload) file: FileUpload,
+    @Ctx() { userId }: Context
+  ) {
+    const { createReadStream, mimetype } = await file
+
+    if (mimetype !== 'image/jpeg' && mimetype !== 'image/png')
+      throw new Error('Image must be PNG or JPEG')
+
+    const transformer = sharp()
+      .resize(370, 370, { fit: 'cover' })
+      .png()
+
+    const outStream = new Stream.PassThrough()
+    createReadStream()
+      .pipe(transformer)
+      .pipe(outStream)
+
+    const url = await s3upload(
+      `user/${userId}/avatar.png`,
+      outStream,
+      file.mimetype
+    )
+
+    await this.userRepository.update(userId, { profilePicUrl: url })
+    return true
+  }
+
   @UseMiddleware(RequiresAuth)
   @Mutation(() => Boolean)
   async followUser(
@@ -222,10 +257,19 @@ export class UserResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(() => Boolean)
   async blockUser(
-    @Arg('blockedId', () => ID) blockedId: string,
+    @Arg('blockedUsername') blockedUsername: string,
     @Ctx() { userId }: Context
   ) {
-    if (blockedId === userId) {
+    const blockedUser = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.username ILIKE :blockedUsername', {
+        blockedUsername: blockedUsername.replace(/_/g, '\\_')
+      })
+      .getOne()
+
+    if (!blockedUser) throw new Error('User does not exist')
+
+    if (blockedUser.id === userId) {
       throw new Error('Cannot block yourself')
     }
 
@@ -233,7 +277,7 @@ export class UserResolver extends RepositoryInjector {
       .createQueryBuilder('user')
       .relation(User, 'blockedUsers')
       .of(userId)
-      .add(blockedId)
+      .add(blockedUser.id)
     return true
   }
 

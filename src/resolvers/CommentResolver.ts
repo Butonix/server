@@ -10,7 +10,7 @@ import {
   Root,
   UseMiddleware
 } from 'type-graphql'
-import { RequiresAuth } from '../RequiresAuth'
+import { RequiresAuth } from '../middleware/RequiresAuth'
 import { Context } from '../Context'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Comment } from '../entities/Comment'
@@ -153,6 +153,11 @@ export class CommentResolver extends RepositoryInjector {
       comment.isEndorsed = Boolean(comment.personalEndorsementCount)
       if (comment.deleted) {
         comment.textContent = `<p>[deleted]</p>`
+        comment.authorId = null
+        comment.author = null
+      }
+      if (comment.removed) {
+        comment.textContent = `<p>[removed: ${comment.removedReason}]</p>`
         comment.authorId = null
         comment.author = null
       }
