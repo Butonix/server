@@ -1,5 +1,5 @@
 import { Field, ID, ObjectType } from 'type-graphql'
-import { Column, Entity, JoinTable, ManyToMany, PrimaryColumn } from 'typeorm'
+import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm'
 import { Lazy } from '../lazy'
 import { Planet } from './Planet'
 
@@ -22,11 +22,10 @@ export class Galaxy {
   @Column('text', { nullable: true })
   description?: string
 
-  @ManyToMany(
+  @OneToMany(
     () => Planet,
     (planet) => planet.galaxy
   )
-  @JoinTable()
   planets: Lazy<Planet[]>
 
   @Field({ nullable: true })
