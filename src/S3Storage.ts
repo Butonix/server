@@ -4,7 +4,8 @@ import { s3 } from './s3'
 export const s3upload = async (
   Key: string,
   Body: any,
-  ContentType: string
+  ContentType: string,
+  cacheBust = true
 ): Promise<string> => {
   const upload = s3.upload({
     Bucket: 'i.getcomet.net',
@@ -22,9 +23,9 @@ export const s3upload = async (
         }
 
         resolve(
-          (result.Location.replace('s3.amazonaws.com/', '') +
-            '?rand=' +
-            shortid.generate()) as string
+          `${result.Location.replace('s3.amazonaws.com/', '')}${
+            cacheBust ? '?rand=' + shortid.generate() : ''
+          }`
         )
       })
     })

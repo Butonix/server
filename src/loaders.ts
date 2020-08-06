@@ -37,6 +37,7 @@ export const PostLoader = new DataLoader(async (keys: string[]) => {
   const entities = await getRepository(Post)
     .createQueryBuilder('post')
     .whereInIds(keys)
+    .leftJoinAndSelect('post.planet', 'planet')
     .getMany()
 
   const entityMap: any = {}

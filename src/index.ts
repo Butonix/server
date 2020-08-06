@@ -27,6 +27,7 @@ import { entities, resolvers } from './EntitiesAndResolvers'
 import { getRepository } from 'typeorm'
 import { Galaxy } from './entities/Galaxy'
 import { galaxiesList } from './galaxiesList'
+import { graphqlUploadExpress } from 'graphql-upload'
 
 // register 3rd party IOC container
 TypeORM.useContainer(Container)
@@ -130,6 +131,13 @@ async function bootstrap() {
 
     app.use(cookieParser())
 
+    app.use(
+      graphqlUploadExpress({
+        maxFileSize: 4 * 1024 * 1024,
+        maxFiles: 1
+      })
+    )
+
     const server = new ApolloServer({
       schema,
       playground: process.env.NODE_ENV !== 'production',
@@ -144,7 +152,9 @@ async function bootstrap() {
           commentLoader: CommentLoader,
           postViewLoader: PostViewLoader
         } as Context
-      }
+      },
+      uploads: false,
+      introspection: true
     })
 
     server.applyMiddleware({

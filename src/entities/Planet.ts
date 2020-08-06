@@ -90,6 +90,10 @@ export class Planet {
   @Column({ default: true })
   allowImagePosts: boolean
 
+  @Field()
+  @Column({ default: false })
+  modPostsOnly: boolean
+
   @Field(() => Sort)
   @Column({
     type: 'enum',

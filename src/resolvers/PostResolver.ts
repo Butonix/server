@@ -28,7 +28,6 @@ import { FeedArgs, Filter, Sort, Time } from '../args/FeedArgs'
 import axios from 'axios'
 import sharp from 'sharp'
 import { User } from '../entities/User'
-import { SearchPostsArgs } from '../args/SearchPostsArgs'
 import { differenceInSeconds } from 'date-fns'
 import { s3 } from '../s3'
 import { discordReport } from '../DiscordBot'
@@ -40,6 +39,8 @@ import { filterXSS } from 'xss'
 import { whiteList } from '../xssWhiteList'
 import { Planet } from '../entities/Planet'
 import { PostEndorsement } from '../entities/PostEndorsement'
+import { Stream } from 'stream'
+import { s3upload } from '../S3Storage'
 
 @Resolver(() => Post)
 export class PostResolver extends RepositoryInjector {
@@ -399,21 +400,35 @@ export class PostResolver extends RepositoryInjector {
   @UseMiddleware(RequiresAuth)
   @Mutation(() => Post)
   async submitPost(
-    @Args() { title, type, link, textContent, planet }: SubmitPostArgs,
+    @Args() { title, type, link, textContent, planet, image }: SubmitPostArgs,
     @Ctx() { userId }: Context
   ) {
     const user = await this.userRepository.findOne(userId)
 
     if (!user) throw new Error('Invalid login')
 
-    if (user.lastPostedAt && !user.admin) {
+    /*if (user.lastPostedAt && !user.admin) {
       if (differenceInSeconds(new Date(), user.lastPostedAt) < 60 * 2) {
         throw new Error('Please wait 2 minutes between posts')
       }
-    }
+    }*/
+
+    const postId = shortid.generate()
 
     if (textContent) {
       textContent = filterXSS(textContent, { whiteList })
+    }
+
+    if (image) {
+      const { createReadStream, mimetype } = await image
+
+      if (mimetype !== 'image/jpeg' && mimetype !== 'image/png')
+        throw new Error('Image must be PNG or JPEG')
+
+      const outStream = new Stream.PassThrough()
+      createReadStream().pipe(outStream)
+
+      link = await s3upload(`uploads/${postId}.png`, outStream, mimetype, false)
     }
 
     this.userRepository.update(userId, { lastPostedAt: new Date() })
@@ -452,7 +467,6 @@ export class PostResolver extends RepositoryInjector {
       parseResult.domain = url.hostname
     }
 
-    const postId = shortid.generate()
     let s3UploadLink = ''
 
     if (
@@ -460,30 +474,32 @@ export class PostResolver extends RepositoryInjector {
       parseResult &&
       parseResult.lead_image_url
     ) {
-      const response = await axios.get(parseResult.lead_image_url, {
-        responseType: 'arraybuffer'
-      })
-      const resizedImage = await sharp(response.data)
-        .resize(80, 60, {
-          background: { r: 0, g: 0, b: 0, alpha: 0 }
+      try {
+        const response = await axios.get(parseResult.lead_image_url, {
+          responseType: 'arraybuffer'
         })
-        .jpeg()
-        .toBuffer()
+        const resizedImage = await sharp(response.data)
+          .resize(80, 60, {
+            background: { r: 0, g: 0, b: 0, alpha: 0 }
+          })
+          .jpeg()
+          .toBuffer()
 
-      s3UploadLink = await new Promise((resolve, reject) =>
-        s3.upload(
-          {
-            Bucket: 'i.getcomet.net',
-            Key: `thumbs/${postId}.jpg`,
-            Body: resizedImage,
-            ContentType: 'image/jpeg'
-          },
-          (err, data) => {
-            if (err) reject(err)
-            else resolve(data.Location.replace('s3.amazonaws.com/', ''))
-          }
+        s3UploadLink = await new Promise((resolve, reject) =>
+          s3.upload(
+            {
+              Bucket: 'i.getcomet.net',
+              Key: `thumbs/${postId}.jpg`,
+              Body: resizedImage,
+              ContentType: 'image/jpeg'
+            },
+            (err, data) => {
+              if (err) reject(err)
+              else resolve(data.Location.replace('s3.amazonaws.com/', ''))
+            }
+          )
         )
-      )
+      } catch (e) {}
     }
 
     const post = await this.postRepository.save({

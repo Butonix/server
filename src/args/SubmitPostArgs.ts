@@ -1,6 +1,7 @@
 import { ArgsType, Field } from 'type-graphql'
 import { PostType } from '../entities/Post'
 import { Length, Matches, IsOptional } from 'class-validator'
+import { FileUpload, GraphQLUpload } from 'graphql-upload'
 
 @ArgsType()
 export class SubmitPostArgs {
@@ -25,4 +26,7 @@ export class SubmitPostArgs {
   @Matches(/^[a-zA-Z0-9_]+$/)
   @Length(3, 21)
   planet: string
+
+  @Field(() => GraphQLUpload, { nullable: true })
+  image?: FileUpload
 }

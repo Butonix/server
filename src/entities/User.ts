@@ -37,6 +37,10 @@ export class User {
   @Column({ nullable: true })
   profilePicUrl?: string
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  bannerImageUrl?: string
+
   @Field()
   @Column()
   createdAt: Date

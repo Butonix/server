@@ -97,10 +97,19 @@ async function redditReposter() {
 
   const headers = { 'User-Agent': 'getcomet.net reddit post saver' }
 
-  const { data } = await axios.get(
-    `https://www.reddit.com/r/${subreddits.join('+')}/hot.json?limit=100`,
-    { headers }
-  )
+  let res
+
+  try {
+    res = await axios.get(
+      `https://www.reddit.com/r/${subreddits.join('+')}/hot.json?limit=100`,
+      { headers }
+    )
+  } catch (e) {
+    console.error('Failed to retrieve reddit posts')
+    return
+  }
+
+  const { data } = res
 
   let redditPosts = data.data.children
     .map((post: any) => post.data)
@@ -162,10 +171,10 @@ async function redditReposter() {
     }
 
     if (!thumbnailUrl && parseResult && parseResult.lead_image_url) {
-      const response = await axios.get(parseResult.lead_image_url, {
-        responseType: 'arraybuffer'
-      })
       try {
+        const response = await axios.get(parseResult.lead_image_url, {
+          responseType: 'arraybuffer'
+        })
         const resizedImage = await sharp(response.data)
           .resize(80, 60, {
             background: { r: 0, g: 0, b: 0, alpha: 0 }

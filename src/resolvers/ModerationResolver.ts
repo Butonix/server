@@ -1,12 +1,11 @@
 import { RepositoryInjector } from '../RepositoryInjector'
-import { Arg, Ctx, ID, Mutation, UseMiddleware } from 'type-graphql'
+import { Arg, ID, Mutation, UseMiddleware } from 'type-graphql'
 import { Planet } from '../entities/Planet'
-import { Context } from '../Context'
-import { GraphQLUpload, FileUpload } from 'graphql-upload'
 import { s3upload } from '../S3Storage'
 import sharp from 'sharp'
 import { Stream } from 'stream'
 import { RequiresMod } from '../middleware/RequiresMod'
+import { FileUpload, GraphQLUpload } from 'graphql-upload'
 
 export class ModerationResolver extends RepositoryInjector {
   @Mutation(() => Boolean)
@@ -56,16 +55,6 @@ export class ModerationResolver extends RepositoryInjector {
       .relation(Planet, 'bannedUsers')
       .of(planetName)
       .remove(bannedUserId)
-  }
-
-  @Mutation(() => Boolean)
-  @UseMiddleware(RequiresMod)
-  async setPlanetThemeColor(
-    @Arg('planetName', () => ID) planetName: string,
-    @Arg('themeColor') themeColor: string
-  ) {
-    if (!/^#[0-9A-F]{6}$/i.test(themeColor)) throw new Error('Invalid color')
-    await this.planetRepository.update(planetName, { themeColor })
   }
 
   @Mutation(() => Boolean)
@@ -130,23 +119,35 @@ export class ModerationResolver extends RepositoryInjector {
 
   @Mutation(() => Boolean)
   @UseMiddleware(RequiresMod)
-  async setPlanetDescription(
+  async setPlanetInfo(
     @Arg('planetName', () => ID) planetName: string,
-    @Arg('description') description: string
+    @Arg('allowTextPosts') allowTextPosts: boolean,
+    @Arg('allowLinkPosts') allowLinkPosts: boolean,
+    @Arg('allowImagePosts') allowImagePosts: boolean,
+    @Arg('modPostsOnly') modPostsOnly: boolean,
+    @Arg('description') description: string,
+    @Arg('customName', { nullable: true }) customName?: string,
+    @Arg('themeColor', { nullable: true }) themeColor?: string
   ) {
-    if (description.length > 10000)
-      throw new Error('Custom name must be 10000 characters or less')
-    await this.planetRepository.update(planetName, { description })
-  }
-
-  @Mutation(() => Boolean)
-  @UseMiddleware(RequiresMod)
-  async setPlanetCustomName(
-    @Arg('planetName', () => ID) planetName: string,
-    @Arg('customName') customName: string
-  ) {
-    if (customName.length > 50)
+    if (customName && customName.length > 50)
       throw new Error('Custom name must be 50 characters or less')
-    await this.planetRepository.update(planetName, { customName })
+
+    if (description && description.length > 10000)
+      throw new Error('Custom name must be 10000 characters or less')
+
+    if (themeColor && !/^#[0-9A-F]{6}$/i.test(themeColor))
+      throw new Error('Invalid color')
+
+    await this.planetRepository.update(planetName, {
+      allowTextPosts,
+      allowLinkPosts,
+      allowImagePosts,
+      modPostsOnly,
+      customName,
+      description,
+      themeColor
+    })
+
+    return true
   }
 }
