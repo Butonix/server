@@ -403,9 +403,14 @@ export class PostResolver extends RepositoryInjector {
     @Args() { title, type, link, textContent, planet, image }: SubmitPostArgs,
     @Ctx() { userId }: Context
   ) {
-    const user = await this.userRepository.findOne(userId)
-
-    if (!user) throw new Error('Invalid login')
+    const p = await this.planetRepository
+      .createQueryBuilder('planet')
+      .where('planet.name = :planet', { planet })
+      .leftJoinAndSelect('planet.bannedUsers', 'bannedUser')
+      .getOne()
+    const bannedUsers = await p.bannedUsers
+    if (bannedUsers.map((u) => u.id).includes(userId))
+      throw new Error('You have been banned from ' + planet)
 
     /*if (user.lastPostedAt && !user.admin) {
       if (differenceInSeconds(new Date(), user.lastPostedAt) < 60 * 2) {

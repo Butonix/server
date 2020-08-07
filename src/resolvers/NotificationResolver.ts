@@ -25,6 +25,7 @@ export class NotificationResolver extends RepositoryInjector {
       .createQueryBuilder('notification')
       .leftJoinAndSelect('notification.fromUser', 'fromUser')
       .leftJoinAndSelect('notification.post', 'post')
+      .leftJoinAndSelect('post.planet', 'planet')
       .leftJoinAndSelect(
         'notification.comment',
         'comment',

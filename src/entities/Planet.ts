@@ -116,11 +116,7 @@ export class Planet {
 
   @Field({ nullable: true })
   @Column({ nullable: true })
-  cardImageUrl?: string
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  backgroundImageUrl?: string
+  bannerImageUrl?: string
 
   @Field({ nullable: true })
   @Column({ nullable: true })

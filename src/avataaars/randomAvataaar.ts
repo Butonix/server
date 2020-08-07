@@ -166,7 +166,7 @@ const skinColors = [
   'Black'
 ]
 
-const randomFromArr = (arr: any[]) =>
+export const randomFromArr = (arr: any[]) =>
   arr[Math.floor(Math.random() * arr.length)]
 
 export const randomAvataaarUrl = () => {

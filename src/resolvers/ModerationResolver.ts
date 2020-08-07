@@ -16,6 +16,7 @@ export class ModerationResolver extends RepositoryInjector {
     @Arg('removedReason') removedReason: string
   ) {
     await this.postRepository.update(postId, { removed: true, removedReason })
+    return true
   }
 
   @Mutation(() => Boolean)
@@ -29,6 +30,7 @@ export class ModerationResolver extends RepositoryInjector {
       removed: true,
       removedReason
     })
+    return true
   }
 
   @Mutation(() => Boolean)
@@ -42,6 +44,7 @@ export class ModerationResolver extends RepositoryInjector {
       .relation(Planet, 'bannedUsers')
       .of(planetName)
       .add(bannedUserId)
+    return true
   }
 
   @Mutation(() => Boolean)
@@ -55,6 +58,7 @@ export class ModerationResolver extends RepositoryInjector {
       .relation(Planet, 'bannedUsers')
       .of(planetName)
       .remove(bannedUserId)
+    return true
   }
 
   @Mutation(() => Boolean)
@@ -89,7 +93,7 @@ export class ModerationResolver extends RepositoryInjector {
 
   @Mutation(() => Boolean)
   @UseMiddleware(RequiresMod)
-  async uploadPlanetCardImage(
+  async uploadPlanetBannerImage(
     @Arg('planetName', () => ID) planetName: string,
     @Arg('file', () => GraphQLUpload) file: FileUpload
   ) {
@@ -98,22 +102,16 @@ export class ModerationResolver extends RepositoryInjector {
     if (mimetype !== 'image/jpeg' && mimetype !== 'image/png')
       throw new Error('Image must be PNG or JPEG')
 
-    const transformer = sharp()
-      .resize(1920, 1080, { fit: 'cover' })
-      .png()
-
     const outStream = new Stream.PassThrough()
-    createReadStream()
-      .pipe(transformer)
-      .pipe(outStream)
+    createReadStream().pipe(outStream)
 
     const url = await s3upload(
-      `planet/${planetName}/card.png`,
+      `planet/${planetName}/banner.png`,
       outStream,
       file.mimetype
     )
 
-    await this.planetRepository.update(planetName, { cardImageUrl: url })
+    await this.planetRepository.update(planetName, { bannerImageUrl: url })
     return true
   }
 

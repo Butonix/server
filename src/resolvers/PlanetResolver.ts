@@ -18,6 +18,7 @@ import { galaxiesList } from '../galaxiesList'
 import { Galaxy } from '../entities/Galaxy'
 import { Context } from '../Context'
 import { User } from '../entities/User'
+import { randomThemeColor } from '../randomThemeColor'
 
 @Resolver(() => Planet)
 export class PlanetResolver extends RepositoryInjector {
@@ -47,7 +48,8 @@ export class PlanetResolver extends RepositoryInjector {
       createdAt: new Date(),
       creatorId: userId,
       moderators: [{ id: userId }],
-      users: [{ id: userId }]
+      users: [{ id: userId }],
+      themeColor: randomThemeColor()
     } as Planet)
 
     return true
@@ -224,6 +226,7 @@ export class PlanetResolver extends RepositoryInjector {
         (qb) => {
           return qb
             .andWhere('post.deleted = false')
+            .andWhere('post.removed = false')
             .andWhere("post.createdAt > NOW() - INTERVAL '1 day'")
         }
       )

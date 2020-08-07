@@ -45,11 +45,15 @@ export class FiltersResolver extends RepositoryInjector {
         'user.comments',
         'comment',
         (qb) => {
-          return qb.andWhere('comment.deleted = false')
+          return qb
+            .andWhere('comment.deleted = false')
+            .andWhere('comment.removed = false')
         }
       )
       .loadRelationCountAndMap('user.postCount', 'user.posts', 'post', (qb) => {
-        return qb.andWhere('post.deleted = false')
+        return qb
+          .andWhere('post.deleted = false')
+          .andWhere('post.removed = false')
       })
       .getMany()
 

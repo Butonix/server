@@ -19,7 +19,6 @@ import shortid from 'shortid'
 import { PostCommentsArgs } from '../args/PostCommentsArgs'
 import { Sort } from '../args/FeedArgs'
 import { User } from '../entities/User'
-import { differenceInSeconds } from 'date-fns'
 import { ReplyNotification } from '../entities/ReplyNotification'
 import { filterXSS } from 'xss'
 import { whiteList } from '../xssWhiteList'
@@ -33,11 +32,15 @@ export class CommentResolver extends RepositoryInjector {
     @Args() { textContent, postId, parentCommentId }: SubmitCommentArgs,
     @Ctx() { userId }: Context
   ) {
-    if (!textContent) throw new Error('textContent cannot be empty')
-
-    const user = await this.userRepository.findOne(userId)
-
-    if (!user) throw new Error('Invalid login')
+    const post = await this.postRepository
+      .createQueryBuilder('post')
+      .where('post.id = :postId', { postId })
+      .leftJoinAndSelect('post.planet', 'planet')
+      .leftJoinAndSelect('planet.bannedUsers', 'bannedUser')
+      .getOne()
+    const bannedUsers = await (await post.planet).bannedUsers
+    if (bannedUsers.map((u) => u.id).includes(userId))
+      throw new Error('You have been banned from ' + (await post.planet).name)
 
     /*if (user.lastCommentedAt && !user.admin) {
       if (differenceInSeconds(new Date(), user.lastCommentedAt) < 15) {

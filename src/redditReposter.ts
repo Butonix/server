@@ -12,6 +12,8 @@ import sharp from 'sharp'
 import { s3 } from './s3'
 import { entities } from './EntitiesAndResolvers'
 import { galaxiesList } from './galaxiesList'
+import { randomFromArr } from './avataaars/randomAvataaar'
+import { randomThemeColor } from './randomThemeColor'
 
 const galaxyMap = {
   programming: galaxiesList.find((g) => g.name === 'programming'),
@@ -211,10 +213,10 @@ async function redditReposter() {
       planet: {
         name: post.subreddit,
         description: post.subreddit,
-        moderators: [{ id: cometBot.id }],
         creatorId: cometBot.id,
         createdAt: new Date(2020, 6, 28),
-        galaxy: galaxyMap[post.subreddit]
+        galaxy: galaxyMap[post.subreddit],
+        themeColor: randomThemeColor()
       }
     } as Post
   })

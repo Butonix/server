@@ -22,6 +22,7 @@ import sharp from 'sharp'
 import { Stream } from 'stream'
 import { s3upload } from '../S3Storage'
 import { FileUpload, GraphQLUpload } from 'graphql-upload'
+import { RequiresAdmin } from '../middleware/RequiresAdmin'
 
 @Resolver(() => User)
 export class UserResolver extends RepositoryInjector {
@@ -73,7 +74,9 @@ export class UserResolver extends RepositoryInjector {
         }
       )
       .loadRelationCountAndMap('user.postCount', 'user.posts', 'post', (qb) => {
-        return qb.andWhere('post.deleted = false')
+        return qb
+          .andWhere('post.deleted = false')
+          .andWhere('post.removed = false')
       })
       .leftJoinAndSelect('user.moderatedPlanets', 'moderatedPlanet')
       .getOne()
@@ -337,38 +340,6 @@ export class UserResolver extends RepositoryInjector {
       .relation(User, 'blockedUsers')
       .of(userId)
       .remove(blockedId)
-    return true
-  }
-
-  @UseMiddleware(RequiresAuth)
-  @Mutation(() => Boolean)
-  async banUser(
-    @Arg('bannedId', () => ID) bannedId: string,
-    @Arg('banReason') banReason: string,
-    @Ctx() { userId }: Context
-  ) {
-    const user = await this.userRepository.findOne(userId)
-    if (!user.admin) throw new Error('Must be admin to ban users')
-
-    await this.userRepository.update(bannedId, { banned: true, banReason })
-
-    return true
-  }
-
-  @UseMiddleware(RequiresAuth)
-  @Mutation(() => Boolean)
-  async unbanUser(
-    @Arg('bannedId', () => ID) bannedId: string,
-    @Ctx() { userId }: Context
-  ) {
-    const user = await this.userRepository.findOne(userId)
-    if (!user.admin) throw new Error('Must be admin to unban users')
-
-    await this.userRepository.update(bannedId, {
-      banned: false,
-      banReason: null
-    })
-
     return true
   }
 
