@@ -212,11 +212,9 @@ async function redditReposter() {
       link: post.url,
       planet: {
         name: post.subreddit,
-        description: post.subreddit,
         creatorId: cometBot.id,
         createdAt: new Date(2020, 6, 28),
-        galaxy: galaxyMap[post.subreddit],
-        themeColor: randomThemeColor()
+        galaxy: galaxyMap[post.subreddit]
       }
     } as Post
   })

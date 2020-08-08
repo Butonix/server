@@ -154,7 +154,7 @@ export class PlanetResolver extends RepositoryInjector {
 
   @Query(() => [Planet])
   async popularPlanets(
-    @Arg('galaxyName', () => ID, { nullable: true }) galaxyName: string
+    @Arg('galaxyName', () => ID, { nullable: true }) galaxyName?: string
   ) {
     const qb = await this.planetRepository
       .createQueryBuilder('planet')
@@ -166,11 +166,14 @@ export class PlanetResolver extends RepositoryInjector {
       )
       .groupBy('planet.name')
       .orderBy('planet_total', 'DESC')
-      .having('COUNT(posts.id) > 0')
       .take(5)
 
     if (galaxyName) {
       qb.where('planet.galaxy = :galaxyName', { galaxyName })
+    }
+
+    if (!galaxyName) {
+      qb.having('COUNT(posts.id) > 0')
     }
 
     const planets = await qb.getMany()

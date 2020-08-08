@@ -148,4 +148,18 @@ export class ModerationResolver extends RepositoryInjector {
 
     return true
   }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(RequiresMod)
+  async removePlanetAvatar(@Arg('planetName', () => ID) planetName: string) {
+    await this.planetRepository.update(planetName, { avatarImageUrl: null })
+    return true
+  }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(RequiresMod)
+  async removePlanetBanner(@Arg('planetName', () => ID) planetName: string) {
+    await this.planetRepository.update(planetName, { bannerImageUrl: null })
+    return true
+  }
 }
