@@ -18,11 +18,9 @@ import { CommentSort, UserCommentsArgs } from '../args/UserCommentsArgs'
 import { RepositoryInjector } from '../RepositoryInjector'
 import { Time } from '../args/FeedArgs'
 import { discordSendFeedback } from '../DiscordBot'
-import sharp from 'sharp'
 import { Stream } from 'stream'
 import { s3upload } from '../S3Storage'
 import { FileUpload, GraphQLUpload } from 'graphql-upload'
-import { RequiresAdmin } from '../middleware/RequiresAdmin'
 
 @Resolver(() => User)
 export class UserResolver extends RepositoryInjector {
@@ -217,14 +215,8 @@ export class UserResolver extends RepositoryInjector {
     if (mimetype !== 'image/jpeg' && mimetype !== 'image/png')
       throw new Error('Image must be PNG or JPEG')
 
-    const transformer = sharp()
-      .resize(370, 370, { fit: 'cover' })
-      .png()
-
     const outStream = new Stream.PassThrough()
-    createReadStream()
-      .pipe(transformer)
-      .pipe(outStream)
+    createReadStream().pipe(outStream)
 
     const url = await s3upload(
       `user/${userId}/avatar.png`,

@@ -2,7 +2,6 @@ import { RepositoryInjector } from '../RepositoryInjector'
 import { Arg, ID, Mutation, UseMiddleware } from 'type-graphql'
 import { Planet } from '../entities/Planet'
 import { s3upload } from '../S3Storage'
-import sharp from 'sharp'
 import { Stream } from 'stream'
 import { RequiresMod } from '../middleware/RequiresMod'
 import { FileUpload, GraphQLUpload } from 'graphql-upload'
@@ -72,14 +71,8 @@ export class ModerationResolver extends RepositoryInjector {
     if (mimetype !== 'image/jpeg' && mimetype !== 'image/png')
       throw new Error('Image must be PNG or JPEG')
 
-    const transformer = sharp()
-      .resize(370, 370, { fit: 'cover' })
-      .png()
-
     const outStream = new Stream.PassThrough()
-    createReadStream()
-      .pipe(transformer)
-      .pipe(outStream)
+    createReadStream().pipe(outStream)
 
     const url = await s3upload(
       `planet/${planetName}/avatar.png`,

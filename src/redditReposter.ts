@@ -12,8 +12,6 @@ import sharp from 'sharp'
 import { s3 } from './s3'
 import { entities } from './EntitiesAndResolvers'
 import { galaxiesList } from './galaxiesList'
-import { randomFromArr } from './avataaars/randomAvataaar'
-import { randomThemeColor } from './randomThemeColor'
 
 const galaxyMap = {
   programming: galaxiesList.find((g) => g.name === 'programming'),
