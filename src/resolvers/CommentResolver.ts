@@ -144,10 +144,11 @@ export class CommentResolver extends RepositoryInjector {
       })
     }
 
-    if (sort === Sort.TOP) {
+    /*if (sort === Sort.TOP) {
       qb.addOrderBy('comment.endorsementCount', 'DESC')
-    }
+    }*/
 
+    qb.addOrderBy('comment.endorsementCount', 'DESC')
     qb.addOrderBy('comment.createdAt', 'DESC')
 
     const comments = await qb.getMany()
