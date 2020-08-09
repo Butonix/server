@@ -24,6 +24,7 @@ const galaxyMap = {
   youtubehaiku: galaxiesList.find((g) => g.name === 'videos_livestreams'),
   news: galaxiesList.find((g) => g.name === 'news'),
   worldnews: galaxiesList.find((g) => g.name === 'news'),
+  usnews: galaxiesList.find((g) => g.name === 'news'),
   sports: galaxiesList.find((g) => g.name === 'sports'),
   InternetIsBeautiful: galaxiesList.find((g) => g.name === 'technology'),
   gadgets: galaxiesList.find((g) => g.name === 'technology'),
@@ -101,7 +102,7 @@ async function redditReposter() {
 
   try {
     res = await axios.get(
-      `https://www.reddit.com/r/${subreddits.join('+')}/hot.json?limit=100`,
+      `https://www.reddit.com/r/${subreddits.join('+')}/hot.json?limit=25`,
       { headers }
     )
   } catch (e) {
@@ -199,6 +200,18 @@ async function redditReposter() {
       } catch {}
     }
 
+    let subreddit = post.subreddit
+    if (subreddit.toLowerCase() === 'news') {
+      subreddit = 'usnews'
+    }
+
+    if (subreddit.toLowerCase() === 'worldnews') {
+      subreddit = 'news'
+    }
+    if (subreddit.toLowerCase() === 'usnews') {
+      subreddit = 'usnews'
+    }
+
     return {
       id: post.id,
       title: post.title.replace(/&amp;/g, '&'),
@@ -209,10 +222,10 @@ async function redditReposter() {
       type,
       link: post.url,
       planet: {
-        name: post.subreddit,
+        name: subreddit,
         creatorId: cometBot.id,
         createdAt: new Date(2020, 6, 28),
-        galaxy: galaxyMap[post.subreddit]
+        galaxy: galaxyMap[subreddit]
       }
     } as Post
   })

@@ -239,13 +239,13 @@ export class PostResolver extends RepositoryInjector {
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
       .getMany()
 
-    let stickies: Post[] = []
-
-    if (planetName) {
+    if (!username && !galaxyName && !search) {
       const stickiesQb = await this.postRepository
         .createQueryBuilder('post')
         .andWhere('post.sticky = true')
-        .andWhere('post.planet = :planetName', { planetName })
+        .andWhere('post.planet = :planetName', {
+          planetName: planetName ? '' : 'Comet'
+        }) // Get stickies from Comet if on Universe or My Planets
         .leftJoinAndSelect('post.planet', 'planet')
         .leftJoinAndSelect('planet.galaxy', 'galaxy')
         .loadRelationCountAndMap('planet.userCount', 'planet.users')
@@ -264,10 +264,10 @@ export class PostResolver extends RepositoryInjector {
         )
       }
 
-      stickies = await stickiesQb.getMany()
-    }
+      const stickies = await stickiesQb.getMany()
 
-    posts = stickies.concat(posts)
+      posts = stickies.concat(posts)
+    }
 
     posts.forEach((post) => {
       post.isEndorsed = Boolean(post.personalEndorsementCount)

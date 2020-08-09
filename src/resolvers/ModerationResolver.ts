@@ -155,4 +155,40 @@ export class ModerationResolver extends RepositoryInjector {
     await this.planetRepository.update(planetName, { bannerImageUrl: null })
     return true
   }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(RequiresMod)
+  async addModerator(
+    @Arg('planetName', () => ID) planetName: string,
+    @Arg('username') username: string
+  ) {
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.username ILIKE :username', {
+        username: username.replace(/_/g, '\\_')
+      })
+      .andWhere('user.banned = false')
+      .leftJoinAndSelect('user.moderatedPlanets', 'moderatedPlanet')
+      .getOne()
+
+    if (!user) throw new Error('User not found')
+    if (
+      !!(await user.moderatedPlanets).find(
+        (p) => p.name.toLowerCase() === planetName.toLowerCase()
+      )
+    ) {
+      throw new Error(
+        `${user.username} is already a moderator of ${planetName}`
+      )
+    }
+    if ((await user.moderatedPlanets).length >= 10)
+      throw new Error(`${user.username} cannot moderate more than 10 planets`)
+
+    await this.planetRepository
+      .createQueryBuilder()
+      .relation(Planet, 'moderators')
+      .of(planetName)
+      .add(user.id)
+    return true
+  }
 }
