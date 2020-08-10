@@ -35,7 +35,11 @@ export class AuthResolver {
       'faggot',
       'fagg0t',
       'whitepower',
-      'cunt'
+      'cunt',
+      'negro',
+      'n3gro',
+      'negr0',
+      'n3gr0'
     ]
 
     inappropiateUsernames.forEach((u) => {
