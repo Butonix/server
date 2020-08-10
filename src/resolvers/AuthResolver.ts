@@ -23,6 +23,27 @@ export class AuthResolver {
     )
       throw new Error('Invalid username')
 
+    const inappropiateUsernames = [
+      'nigger',
+      'n1gger',
+      'n1gg3r',
+      'nigg3r',
+      'nigga',
+      'n1gga',
+      'coon',
+      'c00n',
+      'faggot',
+      'fagg0t',
+      'whitepower',
+      'cunt'
+    ]
+
+    inappropiateUsernames.forEach((u) => {
+      if (username.toLowerCase().includes(u.toLowerCase())) {
+        throw new Error('Inappropiate Username')
+      }
+    })
+
     const foundUser = await this.userRepository.findOne({
       where: `"username" ILIKE '${username.replace(/_/g, '\\_')}'`
     })

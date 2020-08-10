@@ -32,7 +32,11 @@ const galaxies = [
     name: 'finance',
     icon: 'mdiCashUsdOutline'
   },
-  { fullName: 'Outdoors & Nature', name: 'outdoors', icon: 'mdiNaturePeople' },
+  {
+    fullName: 'Outdoors, Nature & Environment',
+    name: 'outdoors',
+    icon: 'mdiNaturePeople'
+  },
   { fullName: 'Sports', name: 'sports', icon: 'mdiBasketball' },
   { fullName: 'Food', name: 'food', icon: 'mdiFood' },
   { fullName: 'Science', name: 'science', icon: 'mdiMicroscope' },

@@ -174,6 +174,9 @@ export class PlanetResolver extends RepositoryInjector {
 
     if (!galaxyName) {
       qb.having('COUNT(posts.id) > 0')
+      qb.leftJoinAndSelect('planet.creator', 'creator')
+        .addGroupBy('creator.id')
+        .andWhere('creator.username != :username', { username: 'Comet' })
     }
 
     const planets = await qb.getMany()
