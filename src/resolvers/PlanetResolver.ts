@@ -19,6 +19,7 @@ import { Galaxy } from '../entities/Galaxy'
 import { Context } from '../Context'
 import { User } from '../entities/User'
 import { randomThemeColor } from '../randomThemeColor'
+import { bannedWords } from '../bannedWords'
 
 @Resolver(() => Planet)
 export class PlanetResolver extends RepositoryInjector {
@@ -28,6 +29,12 @@ export class PlanetResolver extends RepositoryInjector {
     @Args() { name, description, galaxy }: CreatePlanetArgs,
     @Ctx() { userId }: Context
   ) {
+    bannedWords.forEach((u) => {
+      if (name.toLowerCase().includes(u.toLowerCase())) {
+        throw new Error('Inappropiate Planet Name')
+      }
+    })
+
     if (await this.planetExists(name)) throw new Error('Planet already exists')
 
     const user = await this.userRepository

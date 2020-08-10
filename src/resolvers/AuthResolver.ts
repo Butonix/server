@@ -10,6 +10,7 @@ import * as argon2 from 'argon2'
 import { RequiresAuth } from '../middleware/RequiresAuth'
 import { randomAvataaarUrl } from '../avataaars/randomAvataaar'
 import { SignUpArgs } from '../args/SignUpArgs'
+import { bannedWords } from '../bannedWords'
 
 @Resolver()
 export class AuthResolver {
@@ -23,40 +24,7 @@ export class AuthResolver {
     )
       throw new Error('Invalid username')
 
-    const inappropiateUsernames = [
-      'nigger',
-      'n1gger',
-      'n1gg3r',
-      'nigg3r',
-      'nigga',
-      'n1gga',
-      'coon',
-      'c00n',
-      'faggot',
-      'fagg0t',
-      'fag',
-      'whitepower',
-      'white_power',
-      'white-power',
-      'blackpower',
-      'black_power',
-      'black-power',
-      'cunt',
-      'negro',
-      'n3gro',
-      'negr0',
-      'n3gr0',
-      'cracker',
-      'crack3r',
-      'chink',
-      'beaner',
-      'bean3r',
-      'b3aner',
-      'b3an3r',
-      'spic'
-    ]
-
-    inappropiateUsernames.forEach((u) => {
+    bannedWords.forEach((u) => {
       if (username.toLowerCase().includes(u.toLowerCase())) {
         throw new Error('Inappropiate Username')
       }
