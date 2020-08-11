@@ -17,12 +17,12 @@ import { Comment } from '../entities/Comment'
 import { SubmitCommentArgs } from '../args/SubmitCommentArgs'
 import shortid from 'shortid'
 import { PostCommentsArgs } from '../args/PostCommentsArgs'
-import { Sort } from '../args/FeedArgs'
 import { User } from '../entities/User'
 import { ReplyNotification } from '../entities/ReplyNotification'
 import { filterXSS } from 'xss'
 import { whiteList } from '../xssWhiteList'
 import { CommentEndorsement } from '../entities/CommentEndorsement'
+import { flat } from '../flat'
 
 @Resolver(() => Comment)
 export class CommentResolver extends RepositoryInjector {
@@ -151,9 +151,9 @@ export class CommentResolver extends RepositoryInjector {
     qb.addOrderBy('comment.createdAt', 'DESC')
     qb.addOrderBy('comment.endorsementCount', 'DESC')
 
-    const comments = await qb.getMany()
+    const postComments = await qb.getMany()
 
-    comments.forEach((comment) => {
+    postComments.forEach((comment) => {
       comment.isEndorsed = Boolean(comment.personalEndorsementCount)
       if (comment.deleted) {
         comment.textContent = `<p>[deleted]</p>`
@@ -167,7 +167,20 @@ export class CommentResolver extends RepositoryInjector {
       }
     })
 
-    return comments
+    if (postComments.length === 0) return []
+
+    const thread = postComments.filter((c) => c.parentCommentId === null)
+    const fun = (comments: any, level: number) => {
+      for (const comment of comments) {
+        comment.childComments = postComments.filter(
+          (c: any) => c.parentCommentId === comment.id
+        )
+        comment.level = level
+        fun(comment.childComments, level + 1)
+      }
+    }
+    fun(thread, 0)
+    return thread.reduce(flat, [])
   }
 
   @UseMiddleware(RequiresAuth)

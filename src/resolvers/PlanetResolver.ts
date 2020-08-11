@@ -76,8 +76,11 @@ export class PlanetResolver extends RepositoryInjector {
   }
 
   @Query(() => Planet, { nullable: true })
-  async planet(@Arg('planetName', () => ID) planetName: string) {
-    return this.planetRepository
+  async planet(
+    @Arg('planetName', () => ID) planetName: string,
+    @Ctx() { userId }: Context
+  ) {
+    const qb = this.planetRepository
       .createQueryBuilder('planet')
       .andWhere('planet.name ILIKE :planetName', {
         planetName: planetName.replace(/_/g, '\\_')
@@ -85,7 +88,20 @@ export class PlanetResolver extends RepositoryInjector {
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
       .leftJoinAndSelect('planet.moderators', 'moderator')
       .leftJoinAndSelect('planet.galaxy', 'galaxy')
-      .getOne()
+
+    if (userId) {
+      qb.loadRelationCountAndMap(
+        'planet.personalUserCount',
+        'planet.users',
+        'user',
+        (qb) => {
+          return qb.andWhere('user.id = :userId', { userId })
+        }
+      )
+    }
+    const planet = await qb.getOne()
+    planet.joined = Boolean(planet.personalUserCount)
+    return planet
   }
 
   @UseMiddleware(RequiresAuth)
@@ -194,13 +210,31 @@ export class PlanetResolver extends RepositoryInjector {
   }
 
   @Query(() => [Planet])
-  async allPlanets() {
-    return this.planetRepository
+  async allPlanets(@Ctx() { userId }: Context) {
+    const qb = this.planetRepository
       .createQueryBuilder('planet')
       .orderBy('planet.name', 'ASC')
       .leftJoinAndSelect('planet.galaxy', 'galaxy')
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
-      .getMany()
+
+    if (userId) {
+      qb.loadRelationCountAndMap(
+        'planet.personalUserCount',
+        'planet.users',
+        'user',
+        (qb) => {
+          return qb.andWhere('user.id = :userId', { userId })
+        }
+      )
+    }
+
+    const planets = await qb.getMany()
+
+    planets.forEach((planet) => {
+      planet.joined = Boolean(planet.personalUserCount)
+    })
+
+    return planets
   }
 
   @Query(() => [Planet])
@@ -245,41 +279,8 @@ export class PlanetResolver extends RepositoryInjector {
       )
       .getMany()
 
+    planets.forEach((p) => (p.joined = true))
+
     return planets
-  }
-
-  @FieldResolver()
-  async joined(@Root() planet: Planet, @Ctx() { userId }: Context) {
-    if (!userId) return false
-
-    const user = await this.userRepository
-      .createQueryBuilder('user')
-      .where('user.id = :userId', { userId: userId })
-      .leftJoinAndSelect('user.planets', 'planet', 'planet.name = :name', {
-        name: planet.name
-      })
-      .getOne()
-
-    return Boolean((await user.planets).length)
-  }
-
-  @FieldResolver()
-  async muted(@Root() planet: Planet, @Ctx() { userId }: Context) {
-    if (!userId) return false
-
-    const user = await this.userRepository
-      .createQueryBuilder('user')
-      .where('user.id = :userId', { userId: userId })
-      .leftJoinAndSelect(
-        'user.mutedPlanets',
-        'mutedPlanet',
-        'mutedPlanet.name = :name',
-        {
-          name: planet.name
-        }
-      )
-      .getOne()
-
-    return Boolean((await user.mutedPlanets).length)
   }
 }

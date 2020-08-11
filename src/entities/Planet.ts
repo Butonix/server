@@ -133,4 +133,6 @@ export class Planet {
 
   @Column('int', { select: false, default: 0 })
   total: number
+
+  personalUserCount = 0
 }

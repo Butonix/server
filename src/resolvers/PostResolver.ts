@@ -230,6 +230,15 @@ export class PostResolver extends RepositoryInjector {
               .andWhere('endorsement.userId = :userId', { userId })
           }
         )
+
+        qb.loadRelationCountAndMap(
+          'planet.personalUserCount',
+          'planet.users',
+          'user',
+          (qb) => {
+            return qb.andWhere('user.id = :userId', { userId })
+          }
+        )
       }
     }
 
@@ -262,6 +271,15 @@ export class PostResolver extends RepositoryInjector {
               .andWhere('endorsement.userId = :userId', { userId })
           }
         )
+
+        stickiesQb.loadRelationCountAndMap(
+          'planet.personalUserCount',
+          'planet.users',
+          'user',
+          (qb) => {
+            return qb.andWhere('user.id = :userId', { userId })
+          }
+        )
       }
 
       const stickies = await stickiesQb.getMany()
@@ -269,10 +287,11 @@ export class PostResolver extends RepositoryInjector {
       posts = stickies.concat(posts)
     }
 
-    posts.forEach((post) => {
-      post.isEndorsed = Boolean(post.personalEndorsementCount)
-      post.isHidden = false
-    })
+    for (const p of posts) {
+      p.isEndorsed = Boolean(p.personalEndorsementCount)
+      ;(await p.planet).joined = Boolean((await p.planet).personalUserCount)
+      p.isHidden = false
+    }
 
     return posts
   }
@@ -324,6 +343,9 @@ export class PostResolver extends RepositoryInjector {
     const qb = this.postRepository
       .createQueryBuilder('post')
       .where('post.id = :postId', { postId })
+      .leftJoinAndSelect('post.planet', 'planet')
+      .loadRelationCountAndMap('planet.userCount', 'planet.users')
+      .leftJoinAndSelect('planet.galaxy', 'galaxy')
 
     if (userId) {
       qb.loadRelationCountAndMap(
@@ -336,22 +358,34 @@ export class PostResolver extends RepositoryInjector {
             .andWhere('endorsement.userId = :userId', { userId })
         }
       )
+      qb.loadRelationCountAndMap(
+        'planet.personalUserCount',
+        'planet.users',
+        'user',
+        (qb) => {
+          return qb.andWhere('user.id = :userId', { userId })
+        }
+      )
     }
 
-    const post = await qb
-      .leftJoinAndSelect('post.planet', 'planet')
-      .loadRelationCountAndMap('planet.userCount', 'planet.users')
-      .leftJoinAndSelect('planet.galaxy', 'galaxy')
-      .getOne()
+    const post = await qb.getOne()
 
     if (!post) return null
 
     post.isEndorsed = Boolean(post.personalEndorsementCount)
+    ;(await post.planet).joined = Boolean((await post.planet).personalUserCount)
 
     if (post.deleted) {
       post.authorId = null
       post.author = null
       if (post.type === 'TEXT') post.textContent = '<p>[deleted]</p>'
+    }
+
+    if (post.removed) {
+      post.authorId = null
+      post.author = null
+      if (post.type === 'TEXT')
+        post.textContent = `<p>[removed: ${post.removedReason}]</p>`
     }
 
     return post
@@ -731,6 +765,7 @@ export class PostResolver extends RepositoryInjector {
     @Root() post: Post,
     @Ctx() { postViewLoader, userId }: Context
   ) {
+    if (!userId) return null
     return postViewLoader.load({ postId: post.id, userId })
   }
 }
