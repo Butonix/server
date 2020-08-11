@@ -98,8 +98,9 @@ export class UserResolver extends RepositoryInjector {
       .createQueryBuilder('comment')
       .andWhere('comment.authorId = :id', { id: user.id })
       .andWhere('comment.deleted = false')
-      .skip(page * pageSize)
-      .take(pageSize)
+      .andWhere('comment.removed = false')
+    //.skip(page * pageSize)
+    //.take(pageSize)
 
     if (sort === CommentSort.TOP) {
       switch (time) {
