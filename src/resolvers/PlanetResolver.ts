@@ -70,11 +70,6 @@ export class PlanetResolver extends RepositoryInjector {
     return !!foundPlanet
   }
 
-  @Query(() => [Galaxy])
-  galaxies() {
-    return galaxiesList
-  }
-
   @Query(() => Planet, { nullable: true })
   async planet(
     @Arg('planetName', () => ID) planetName: string,

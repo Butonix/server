@@ -30,4 +30,8 @@ export class Galaxy {
 
   @Field({ nullable: true })
   planetCount: number
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  bannerImageUrl?: string
 }

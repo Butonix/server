@@ -205,4 +205,11 @@ export class User {
   @Field()
   @Column({ default: false })
   appearOffline: boolean
+
+  @Field()
+  @Column({ default: 0 })
+  xp: number
+
+  @Field()
+  level: number
 }

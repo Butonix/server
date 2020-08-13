@@ -102,7 +102,7 @@ async function redditReposter() {
 
   try {
     res = await axios.get(
-      `https://www.reddit.com/r/${subreddits.join('+')}/hot.json?limit=25`,
+      `https://www.reddit.com/r/${subreddits.join('+')}/hot.json?limit=10`,
       { headers }
     )
   } catch (e) {
