@@ -75,7 +75,7 @@ async function bootstrap() {
         entities,
         synchronize: true,
         logging: false,
-        dropSchema: true, // CLEARS DATABASE ON START
+        dropSchema: false, // CLEARS DATABASE ON START
         cache: true
       })
     } else return
