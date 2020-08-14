@@ -15,6 +15,7 @@ import { Context } from '../Context'
 import { Stream } from 'stream'
 import { s3upload } from '../S3Storage'
 import { RequiresAdmin } from '../middleware/RequiresAdmin'
+import { Planet } from '../entities/Planet'
 
 @Resolver(() => Galaxy)
 export class GalaxyResolver extends RepositoryInjector {

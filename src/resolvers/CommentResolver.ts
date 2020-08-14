@@ -169,18 +169,48 @@ export class CommentResolver extends RepositoryInjector {
 
     if (postComments.length === 0) return []
 
+    const toRemove: any[] = []
     const thread = postComments.filter((c) => c.parentCommentId === null)
-    const fun = (comments: any, level: number) => {
+    let maxLevel = 0
+    const fun = (comments: any, level: number, parent: any) => {
+      if (level > maxLevel) maxLevel = level
       for (const comment of comments) {
         comment.childComments = postComments.filter(
           (c: any) => c.parentCommentId === comment.id
         )
         comment.level = level
-        fun(comment.childComments, level + 1)
+        if (
+          (!comment.childComments || comment.childComments.length === 0) &&
+          (comment.deleted || comment.removed)
+        ) {
+          toRemove.push(comment.id)
+        }
+        fun(comment.childComments, level + 1, comment)
       }
     }
-    fun(thread, 0)
-    return thread.reduce(flat, [])
+    fun(thread, 0, null)
+    // return thread.reduce(flat, [])
+    let comments = thread
+      .reduce(flat, [])
+      .filter((c: any) => !toRemove.includes(c.id))
+    for (let i = 0; i < maxLevel; i++) {
+      comments = comments.filter(
+        (c: any) =>
+          (!c.deleted && !c.removed) ||
+          (c.childComments && c.childComments.length > 0)
+      )
+      for (const comment of comments) {
+        if (!comment.childComments) continue
+        for (const childId of comment.childComments) {
+          if (!comments.find((c: any) => c.id === childId)) {
+            comment.childComments = comment.childComments.filter(
+              (id: any) => id !== childId
+            )
+          }
+        }
+      }
+    }
+    return comments
   }
 
   @UseMiddleware(RequiresAuth)

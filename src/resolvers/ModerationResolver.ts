@@ -25,6 +25,9 @@ export class ModerationResolver extends RepositoryInjector {
     @Arg('commentId', () => ID) commentId: string,
     @Arg('removedReason') removedReason: string
   ) {
+    const comment = await this.commentRepository.findOne(commentId)
+    this.postRepository.decrement({ id: comment.postId }, 'commentCount', 1)
+
     await this.commentRepository.update(commentId, {
       removed: true,
       removedReason

@@ -95,8 +95,31 @@ export class PlanetResolver extends RepositoryInjector {
       )
     }
     const planet = await qb.getOne()
+    if (!planet) return null
     planet.joined = Boolean(planet.personalUserCount)
     return planet
+  }
+
+  @Query(() => [Planet])
+  async recentPlanets(@Arg('planetNames', () => [ID]) planetNames: string[]) {
+    const qb = this.planetRepository
+      .createQueryBuilder('planet')
+      .andWhere('planet.name ILIKE ANY(:planetNames)', {
+        planetNames: planetNames.map((p) => p.replace(/_/g, '\\_'))
+      })
+      .addGroupBy('planet.name')
+      .addSelect('COUNT(posts.id)', 'planet_total')
+      .leftJoin(
+        'planet.posts',
+        'posts',
+        "posts.deleted = false AND posts.createdAt > NOW() - INTERVAL '1 day'"
+      )
+
+    const planets = await qb.getMany()
+    planets.forEach((planet) => {
+      planet.postCount = planet.total
+    })
+    return planetNames.map((name) => planets.find((p) => p.name === name))
   }
 
   @UseMiddleware(RequiresAuth)
@@ -205,12 +228,17 @@ export class PlanetResolver extends RepositoryInjector {
   }
 
   @Query(() => [Planet])
-  async allPlanets(@Ctx() { userId }: Context) {
+  async allPlanets(
+    @Ctx() { userId }: Context,
+    @Arg('galaxyName', () => ID, { nullable: true }) galaxyName: string
+  ) {
     const qb = this.planetRepository
       .createQueryBuilder('planet')
       .orderBy('planet.name', 'ASC')
       .leftJoinAndSelect('planet.galaxy', 'galaxy')
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
+
+    if (galaxyName) qb.andWhere('galaxy.name = :galaxyName', { galaxyName })
 
     if (userId) {
       qb.loadRelationCountAndMap(

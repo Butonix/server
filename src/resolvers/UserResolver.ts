@@ -38,11 +38,8 @@ export class UserResolver extends RepositoryInjector {
       .getOne()
 
     if (user) {
-      let lastLogin = user.lastLogin
-      if (!user.appearOffline) {
-        lastLogin = new Date()
-        user.lastLogin = lastLogin
-      }
+      const lastLogin = new Date()
+      user.lastLogin = lastLogin
       let ipAddresses = user.ipAddresses
       ipAddresses.unshift(req.ip)
       ipAddresses = [...new Set(ipAddresses)]
@@ -441,5 +438,11 @@ export class UserResolver extends RepositoryInjector {
   @FieldResolver(() => Boolean)
   async isCurrentUser(@Root() user: User, @Ctx() { userId }: Context) {
     return user.id === userId
+  }
+
+  @FieldResolver(() => Date, { nullable: true })
+  async lastLogin(@Root() user: User) {
+    if (user.appearOffline) return null
+    return user.lastLogin
   }
 }
