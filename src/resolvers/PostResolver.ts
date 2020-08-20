@@ -203,9 +203,7 @@ export class PostResolver extends RepositoryInjector {
 
         if (!planetName && filter === Filter.MYPLANETS) {
           const planets = (await user.planets).map((planet) => planet.name)
-          if (planets.length > 0) {
-            qb.andWhere('post.planet = ANY(:planets)', { planets })
-          }
+          qb.andWhere('post.planet = ANY(:planets)', { planets })
         }
 
         if (mutedPlanets.length > 0) {
