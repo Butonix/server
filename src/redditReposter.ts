@@ -10,7 +10,6 @@ import Mercury from '@postlight/mercury-parser'
 import { getThumbnailUrl } from './thumbnail'
 import sharp from 'sharp'
 import { s3 } from './s3'
-import { entities } from './EntitiesAndResolvers'
 import { galaxiesList } from './galaxiesList'
 
 const galaxyMap = {
@@ -48,7 +47,7 @@ async function redditReposter() {
       username: 'postgres',
       password: 'password',
       database: 'postgres',
-      entities,
+      entities: [__dirname + '/entities/**/*.{ts,js}'],
       synchronize: true,
       logging: true,
       cache: true,
@@ -59,7 +58,7 @@ async function redditReposter() {
     await TypeORM.createConnection({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities,
+      entities: [__dirname + '/entities/**/*.{ts,js}'],
       synchronize: true,
       logging: false,
       cache: true
@@ -72,7 +71,7 @@ async function redditReposter() {
     await TypeORM.createConnection({
       type: 'postgres',
       url: process.env.DATABASE_URL,
-      entities,
+      entities: [__dirname + '/entities/**/*.{ts,js}'],
       synchronize: true,
       logging: false,
       cache: true
