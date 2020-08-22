@@ -245,7 +245,7 @@ export class PostResolver extends RepositoryInjector {
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
       .getMany()
 
-    if (planetName) {
+    if (planetName && page === 0) {
       const stickiesQb = await this.postRepository
         .createQueryBuilder('post')
         .andWhere('post.sticky = true')
