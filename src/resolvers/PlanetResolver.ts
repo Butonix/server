@@ -102,6 +102,7 @@ export class PlanetResolver extends RepositoryInjector {
 
   @Query(() => [Planet])
   async recentPlanets(@Arg('planetNames', () => [ID]) planetNames: string[]) {
+    if (planetNames.length === 0) return []
     const qb = this.planetRepository
       .createQueryBuilder('planet')
       .andWhere('planet.name ILIKE ANY(:planetNames)', {
@@ -119,7 +120,9 @@ export class PlanetResolver extends RepositoryInjector {
     planets.forEach((planet) => {
       planet.postCount = planet.total
     })
-    return planetNames.map((name) => planets.find((p) => p.name === name))
+    return planetNames
+      .map((name) => planets.find((p) => p.name === name))
+      .filter((p) => !!p)
   }
 
   @UseMiddleware(RequiresAuth)
