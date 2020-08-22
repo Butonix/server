@@ -19,7 +19,7 @@ export class SubmitPostArgs {
 
   @Field({ nullable: true })
   @IsOptional()
-  @Length(1, 50000)
+  @Length(1, 100000)
   textContent?: string
 
   @Field()
