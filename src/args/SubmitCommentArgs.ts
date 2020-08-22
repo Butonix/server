@@ -4,7 +4,7 @@ import { Length } from 'class-validator'
 @ArgsType()
 export class SubmitCommentArgs {
   @Field()
-  @Length(1, 10000)
+  @Length(1, 100000)
   textContent: string
 
   @Field(() => ID)
