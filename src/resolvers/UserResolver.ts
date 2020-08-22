@@ -54,7 +54,11 @@ export class UserResolver extends RepositoryInjector {
       this.userRepository.update(user.id, { lastLogin, ipAddresses })
     }
 
-    for (const planet of await user.moderatedPlanets) {
+    user.moderatedPlanets = (await user.moderatedPlanets).filter(
+      (p) => !!p.name
+    )
+
+    for (const planet of user.moderatedPlanets) {
       planet.postCount = planet.total
     }
 
