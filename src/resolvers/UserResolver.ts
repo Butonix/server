@@ -34,7 +34,15 @@ export class UserResolver extends RepositoryInjector {
       .createQueryBuilder('user')
       .whereInIds(userId)
       .andWhere('user.banned = false')
-      .leftJoinAndSelect('user.moderatedPlanets', 'moderatedPlanet')
+      .leftJoinAndSelect('user.moderatedPlanets', 'planet')
+      .addSelect('COUNT(posts.id)', 'planet_total')
+      .leftJoin(
+        'planet.posts',
+        'posts',
+        "posts.deleted = false AND posts.createdAt > NOW() - INTERVAL '1 day'"
+      )
+      .addGroupBy('user.id')
+      .addGroupBy('planet.name')
       .getOne()
 
     if (user) {
@@ -44,6 +52,10 @@ export class UserResolver extends RepositoryInjector {
       ipAddresses.unshift(req.ip)
       ipAddresses = [...new Set(ipAddresses)]
       this.userRepository.update(user.id, { lastLogin, ipAddresses })
+    }
+
+    for (const planet of await user.moderatedPlanets) {
+      planet.postCount = planet.total
     }
 
     return user

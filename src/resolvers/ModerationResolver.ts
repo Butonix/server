@@ -20,6 +20,26 @@ export class ModerationResolver extends RepositoryInjector {
 
   @Mutation(() => Boolean)
   @UseMiddleware(RequiresMod)
+  async pinPost(
+    @Arg('planetName', () => ID) planetName: string,
+    @Arg('postId', () => ID) postId: string
+  ) {
+    await this.postRepository.update(postId, { sticky: true })
+    return true
+  }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(RequiresMod)
+  async unpinPost(
+    @Arg('planetName', () => ID) planetName: string,
+    @Arg('postId', () => ID) postId: string
+  ) {
+    await this.postRepository.update(postId, { sticky: false })
+    return true
+  }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(RequiresMod)
   async removeComment(
     @Arg('planetName', () => ID) planetName: string,
     @Arg('commentId', () => ID) commentId: string,

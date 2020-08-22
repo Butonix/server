@@ -49,13 +49,11 @@ export class PostResolver extends RepositoryInjector {
     let result
     try {
       result = await new Promise((resolve, reject) =>
-        request(url, function(error, response, body) {
+        request(url, function (error, response, body) {
           let output = url // default to URL
           if (!error && response.statusCode === 200) {
             const $ = cheerio.load(body)
-            output = $('head > title')
-              .text()
-              .trim()
+            output = $('head > title').text().trim()
             resolve(output)
           } else {
             reject(error)
@@ -90,12 +88,13 @@ export class PostResolver extends RepositoryInjector {
       .createQueryBuilder('post')
       .andWhere('post.deleted = false')
       .andWhere('post.removed = false')
-      .andWhere('post.sticky = false')
       .leftJoinAndSelect('post.planet', 'planet')
       .leftJoinAndSelect('planet.galaxy', 'galaxy')
 
     if (planetName) {
-      qb.andWhere(':planetName ILIKE post.planet', { planetName })
+      qb.andWhere(':planetName ILIKE post.planet', { planetName }).andWhere(
+        'post.sticky = false'
+      )
     }
 
     if (galaxyName) {
@@ -246,13 +245,13 @@ export class PostResolver extends RepositoryInjector {
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
       .getMany()
 
-    if (!username && !galaxyName && !search) {
+    if (planetName) {
       const stickiesQb = await this.postRepository
         .createQueryBuilder('post')
         .andWhere('post.sticky = true')
         .andWhere('post.planet = :planetName', {
-          planetName: planetName ? '' : 'Comet'
-        }) // Get stickies from Comet if on Universe or My Planets
+          planetName
+        })
         .leftJoinAndSelect('post.planet', 'planet')
         .leftJoinAndSelect('planet.galaxy', 'galaxy')
         .loadRelationCountAndMap('planet.userCount', 'planet.users')
@@ -282,6 +281,7 @@ export class PostResolver extends RepositoryInjector {
 
       const stickies = await stickiesQb.getMany()
 
+      console.log(stickies)
       posts = stickies.concat(posts)
     }
 
