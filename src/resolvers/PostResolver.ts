@@ -245,7 +245,7 @@ export class PostResolver extends RepositoryInjector {
       .loadRelationCountAndMap('planet.userCount', 'planet.users')
       .getMany()
 
-    /*if (planetName && page === 0) {
+    if (planetName && page === 0) {
       const stickiesQb = await this.postRepository
         .createQueryBuilder('post')
         .andWhere('post.sticky = true')
@@ -282,7 +282,7 @@ export class PostResolver extends RepositoryInjector {
       const stickies = await stickiesQb.getMany()
 
       posts = stickies.concat(posts)
-    }*/
+    }
 
     for (const p of posts) {
       p.isEndorsed = Boolean(p.personalEndorsementCount)
