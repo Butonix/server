@@ -45,14 +45,14 @@ export class UserResolver extends RepositoryInjector {
       .addGroupBy('planet.name')
       .getOne()
 
-    if (user) {
-      const lastLogin = new Date()
-      user.lastLogin = lastLogin
-      let ipAddresses = user.ipAddresses
-      ipAddresses.unshift(req.ip)
-      ipAddresses = [...new Set(ipAddresses)]
-      this.userRepository.update(user.id, { lastLogin, ipAddresses })
-    }
+    if (!user) return null
+
+    const lastLogin = new Date()
+    user.lastLogin = lastLogin
+    let ipAddresses = user.ipAddresses
+    ipAddresses.unshift(req.ip)
+    ipAddresses = [...new Set(ipAddresses)]
+    this.userRepository.update(user.id, { lastLogin, ipAddresses })
 
     user.moderatedPlanets = (await user.moderatedPlanets).filter(
       (p) => !!p.name
